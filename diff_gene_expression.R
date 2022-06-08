@@ -4,13 +4,13 @@ library(dplyr)
 # import data
 rnaseq_data <- read.csv("/home/rosa/Dokumente/GSE153873_summary_count.star.txt", sep = "\t")
 row.names(rnaseq_data)<- rnaseq_data[,1]
-#rnaseq_data<- select(rnaseq_data, -refGene)
 
 # make subset of AD, young, and old
 AD <- select(rnaseq_data, ends_with("AD"))
 young<- select(rnaseq_data, ends_with("Young"))
 old<- select(rnaseq_data, ends_with("Old"))
 
+apply(old, 2, function(x) any(is.na(x)))
 
 # function to make DEG
 make_DGE<- function(group1, group2, test){
@@ -18,10 +18,11 @@ make_DGE<- function(group1, group2, test){
   
   group1 <- cbind(refGene=rownames(group1), group1)
   group2 <- cbind(refGene=rownames(group2), group2)
-  inner_join(group1, group2, by="refGene")
-  
-  
+
   count_data<- select(inner_join(group1, group2, by="refGene"), -refGene)
+  #add pseudo counts count_data <- count_data +1
+  print(apply(count_data, 2, function(x) any(is.na(x))))
+  
   if (test == "DESeq2"){
     dds<- DESeqDataSetFromMatrix(countData= count_data ,colData=cond, design=~ condition)
     dds<- DESeq(dds)
@@ -32,7 +33,6 @@ make_DGE<- function(group1, group2, test){
 }
 
 deseq_ad_old <- make_DGE(AD, old , "DESeq2")
-
 
 
 
@@ -83,6 +83,7 @@ path = "/home/rosa/DataScienceProject"
 make_volcanoplot(deseq_ad_old, path, "volcanplot.png")
 
  
+plotdf<- data_frame(log2FoldChange= deseq_ad_old$log2FoldChange, padj= deseq_ad_old$padj)
 
 
 
