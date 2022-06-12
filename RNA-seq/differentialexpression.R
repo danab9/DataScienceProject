@@ -28,12 +28,17 @@ rnaseqdata <- data.frame(AD,old,young)
 
 # First task: Comparing gene expression between AD and old samples
 # http://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html
-condition <- factor(c(rep("Old",ncol(old)),rep("AD",ncol(AD))))
-dds <- DESeqDataSetFromMatrix(countData = data.frame(old,AD),
-                              DataFrame(condition), ~ condition)
-dds <- DESeq(dds)
-res <- results(dds,alpha=0.05,tidy=TRUE) # to obtain also the genes
 
+diffexpression <- function(group1,group2,alpha,tidy=TRUE){
+  condition <- factor(c(rep("G1",ncol(group1)),rep("G2",ncol(group2))))
+  dds <- DESeqDataSetFromMatrix(countData = data.frame(group1,group2),
+                              DataFrame(condition), ~ condition)
+  dds <- DESeq(dds)
+  return(results(dds,alpha=alpha,tidy=tidy)) # to obtain also the genes
+}
+
+res <- diffexpression(old,AD,alpha=0.05,tidy=FALSE)
+summary(res)
 
 #421 genes with significant upregulation in AD, while 434
 # had significant downregulation -> 855 significant up/downregulated
