@@ -56,30 +56,52 @@ resNorm <- lfcShrink(dds, coef=2, type="normal")
 plotMA(resNorm, ylim=c(-1.5,1.5),main='Normal')
 
 
+
 #434 downregulated, 421 upregulated
-plotdf<- data_frame(log2FoldChange=res$log2FoldChange, padj= res$padj,genes=res$row)
+# plotdf<- data_frame(log2FoldChange=res$log2FoldChange, padj= res$padj,genes=rownames(res))
+# 
+# plotdf<- plotdf %>%
+#   mutate(gene_type = case_when(log2FoldChange >= 0.6999 & padj < 0.05 ~ "upregulated",
+#                                log2FoldChange <= -0.668 & padj < 0.05 ~ "downregulated",
+#                                TRUE ~ "not significant"))   
+# # OR
+# plotdf<- data_frame(log2FoldChange=res$log2FoldChange, padj= res$padj)
+# plotdf<- plotdf %>%
+#   mutate(gene_type = case_when(log2FoldChange > 0.661 & pvalues < 0.05 ~ "upregulated",
+#                                log2FoldChange < -0.615 & pvalues < 0.05 ~ "downregulated",
+#                                TRUE ~ "not significant"))   
+# 
+# plotdf<- plotdf %>%
+#   mutate(gene_type = case_when(log2FoldChange >= 0.681 & padj < 0.05 ~ "upregulated",
+#                                log2FoldChange <= -0.6869 & padj < 0.05 ~ "downregulated",
+#                                TRUE ~ "not significant"))   
 
+plotdf<- data_frame(log2FoldChange=res$log2FoldChange, padj= res$padj,genes=rownames(res))
 plotdf<- plotdf %>%
-  mutate(gene_type = case_when(log2FoldChange >= 0.6999 & padj < 0.05 ~ "upregulated",
-                               log2FoldChange <= -0.668 & padj < 0.05 ~ "downregulated",
+  mutate(gene_type = case_when(log2FoldChange > 0 & pvalues < 0.05 ~ "upregulated",
+                               log2FoldChange < 0 & pvalues < 0.05 ~ "downregulated",
                                TRUE ~ "not significant"))   
-# OR
-plotdf<- data_frame(log2FoldChange=res$log2FoldChange, padj= res$padj)
-plotdf<- plotdf %>%
-  mutate(gene_type = case_when(log2FoldChange > 0.661 & pvalues < 0.05 ~ "upregulated",
-                               log2FoldChange < -0.615 & pvalues < 0.05 ~ "downregulated",
-                               TRUE ~ "not significant"))   
-
 print(table(plotdf$gene_type))
 
+#up and downregulated genes, ordered by p_adjust
 upregulated <- plotdf[plotdf$gene_type=="upregulated",]
+upregulated <- upregulated[order(upregulated$padj),]
 downregulated <- plotdf[plotdf$gene_type=="downregulated",]
+downregulated <- downregulated[order(downregulated$padj),]
 
 # Comparison to the paper's results
 sheets <- excel_sheets("RNAseq/GSE153873_AD.vs.Old_diff.genes.xlsx")
 x <- lapply(sheets, function(X) readxl::read_excel(filename, sheet = X))
 resultupreg <- read_excel("RNAseq/GSE153873_AD.vs.Old_diff.genes.xlsx",sheet = sheets[1])
 resultdownreg <- read_excel("RNAseq/GSE153873_AD.vs.Old_diff.genes.xlsx",sheet = sheets[2])
+
+which(upregulated$genes%in%unlist(resultupreg[,1]))
+
+which(downregulated$genes%in%unlist(resultdownreg[,1]))
+
+# a lot of overlaps but also some up/downregulated genes but also a lot of genes missing
+# in the 50 most significant downregulated genes: overlap of 49 genes
+# in the 50 most significant upregulated genes: overlap of 45 genes
 
 
 
