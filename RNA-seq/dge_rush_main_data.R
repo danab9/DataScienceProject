@@ -2,108 +2,124 @@ library(DESeq2)
 library(readr)
 library(stringr)
 library(dplyr)
-rush_data<- read.csv("/home/rosa/rush_data/all_counts.csv",  header=TRUE)
-rush_data<- rush_data[,2:ncol(rush_data)]
-rush_data<- dplyr::select(rush_data, -c(ensembl_gene_id, gene_biotype))
-rownames(rush_data)<- rush_data$hgnc_symbol
+library(ggplot2)
 
 
-rnaseqdata <- read.table("/home/rosa/Dokumente/GSE153873_summary_count.star.txt", sep = "\t",header = TRUE,row.names = 1)
-colnames(rnaseqdata) <- paste0(data.frame(str_split(colnames(rnaseqdata),'[.]'))[3,],data.frame(str_split(colnames(rnaseqdata),'[.]'))[1,])
-#rnaseq_ercc <- read.table("RNAseq/GSE153873_summary_count.ercc.txt", sep = "\t")
-dim(rnaseqdata)
-# 27135 different genes and 30 patients
+# Import count tables
+##---------------------------------------------------------------------------------------##
 
+# Rush Data
+
+# female AD case, 29 cases and 39672 genes
+rush_AD <- read.csv("/home/rosa/DataScienceProject/RushData/all_counts_femaleAD.csv",  header=TRUE)
+rush_AD <- rush_AD[,2:ncol(rush_AD)]
+rush_AD<- dplyr::select(rush_AD, -c(ensembl_gene_id, gene_biotype))
+rownames(rush_AD)<- rush_AD$hgnc_symbol
+rush_AD <- dplyr::select(rush_AD, -hgnc_symbol)
+
+
+
+# female control cases, 13 samples and 39670 genes
+rush_control <- read.csv("/home/rosa/DataScienceProject/RushData/all_counts_control.csv",  header=TRUE)
+rush_control <- rush_control[,2:ncol(rush_control)]
+rush_control <- dplyr::select(rush_control, -c(ensembl_gene_id, gene_biotype))
+rownames(rush_control)<- rush_control$hgnc_symbol
+rush_control <- dplyr::select(rush_control, -hgnc_symbol)
+
+
+# AD and control samples from main paper, 27135 different genes and 30 patients
+
+maindata <- read.table("/home/rosa/Dokumente/GSE153873_summary_count.star.txt", sep = "\t",header = TRUE,row.names = 1)
+colnames(maindata) <- paste0(data.frame(str_split(colnames(maindata),'[.]'))[3,],data.frame(str_split(colnames(maindata),'[.]'))[1,])
+dim(maindata)
 
 # Groups
-AD <- dplyr::select(rnaseqdata, starts_with("AD"))
-young <- dplyr::select(rnaseqdata, starts_with("Young"))
-old <- dplyr::select(rnaseqdata, starts_with("Old"))
-female<- dplyr::select(rush_data, -hgnc_symbol)
-
-old<- dplyr::select(old, -hgnc_symbol)
+AD <- dplyr::select(maindata, starts_with("AD"))
+young <- dplyr::select(maindata, starts_with("Young"))
+old <- dplyr::select(maindata, starts_with("Old"))
 
 
-# differential gene expression: control vs female
-# 23589 common measured genes 
+# Differential gene expression: 
+##---------------------------------------------------------------------------------------##
 
-control_female<- inner_join(old, rush_data,  by="hgnc_symbol")
-rownames(control_female)<- control_female$hgnc_symbol
-control_female<- dplyr::select(control_female, -hgnc_symbol)
+# merge data: 
+# control (main old  + rush ) vs AD (main + rush)
 
-AD$hgnc_symbol<- rownames(AD)
-male_female<- inner_join(AD, rush_data,  by="hgnc_symbol")
-rownames(male_female)<- male_female$hgnc_symbol
-male_female<- dplyr::select(male_female, -hgnc_symbol)
-AD<-  dplyr::select(AD, -hgnc_symbol)
+# for balanced group, reducing sample size of rush 
+rush_AD <- rush_AD[, 1:12]
+rush_control <- rush_control[,1:10]
 
+# intersect the measured genes from the datasets
 
-execute_dge<- function(matrix, samplesize1, samplesize2){
-  condition <- factor(c(rep("G1",samplesize1),rep("G2",samplesize2)))
-  
-  dds_cf <- DESeqDataSetFromMatrix(countData = matrix,
-                                   DataFrame(condition), ~ condition)
-  dds_cf <- DESeq(dds_cf)
-  return (dds_cf)
-  
-}
+total_control<- merge(old, rush_control,  by= 0 )
+rownames(total_control)<- total_control$Row.names
+total_control<- dplyr::select(total_control, -Row.names)
 
-dds<- execute_dge(male_female, ncol(AD), ncol(female))
-res<- results(dds,alpha= 0.05)
+total_AD<- merge(AD, rush_AD,  by= 0 )
+rownames(total_AD)<- total_AD$Row.names
+total_AD<- dplyr::select(total_AD, -Row.names)
 
-#421 genes with significant upregulation in AD, while 434
-# had significant downregulation -> 855 significant up/downregulated
-resOrdered <- res[order(res$pvalue),]
-summary(res)
-
-pvalues <- p.adjust(res$pvalue, method = "BH")
-sum(pvalues<0.05,na.rm = T)
+total_counts<- merge(total_control, total_AD, by=0)
+rownames(total_counts)<- total_counts$Row.names
+total_counts<- dplyr::select(total_counts, -Row.names)
 
 
-# MA plot
-plotMA(res, ylim=c(-4,4))
+#-----------------------------------------------------------------------------------------#
+# Data Exploration 
+## Investigation of Batch Effects 
+# main: main samples, rush: rush samples
+batch<- factor(c(rep("main", ncol(old)),rep("rush",ncol(rush_control)),rep("main", ncol(AD)),rep("rush", ncol(rush_AD))))
 
-resNorm <- lfcShrink(dds, coef=2, type="normal")
-plotMA(resNorm, ylim=c(-1.5,1.5),main='Normal')
+condition <- factor(c(rep("control", ncol(old)+ ncol(rush_control)),rep("AD", ncol(AD)+ ncol(rush_AD))))
+
+# DeSeq2 modeling with batch effect
+dds <- DESeqDataSetFromMatrix(countData = total_counts,
+                                 DataFrame(condition,batch), ~ batch+condition)
+dds$batch <- batch
+# Principal Component Analysis
+
+vsd<- vst(dds, blind=FALSE)
+
+# plot PCA without batch removal 
+
+pcaData <- plotPCA(vsd, intgroup=c("condition", "batch"), returnData=TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, color=condition, shape = batch)) +
+  geom_point(size=3) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
+
+ggsave("myPCABatchEffectRemoved.png")
+
+# PCA with batch removal 
+assay(vsd) <- limma::removeBatchEffect(assay(vsd), vsd$batch)
+pcaData <- plotPCA(vsd, intgroup=c("condition", "batch"), returnData=TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, color=condition, shape = batch)) +
+  geom_point(size=3) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
+
+ggsave("PCA_after_batch_removal.png")
 
 
-#434 downregulated, 421 upregulated
-plotdf<- data_frame(log2FoldChange=res$log2FoldChange, padj= res$padj,genes=res$row)
+# heatmap of samples
 
-plotdf<- plotdf %>%
-  mutate(gene_type = case_when(log2FoldChange >= 0.6999 & padj < 0.05 ~ "upregulated",
-                               log2FoldChange <= -0.668 & padj < 0.05 ~ "downregulated",
-                               TRUE ~ "not significant"))   
-# OR
-plotdf<- data_frame(log2FoldChange=res$log2FoldChange, padj= res$padj)
-plotdf<- plotdf %>%
-  mutate(gene_type = case_when(log2FoldChange > 0.661 & pvalues < 0.05 ~ "upregulated",
-                               log2FoldChange < -0.615 & pvalues < 0.05 ~ "downregulated",
-                               TRUE ~ "not significant"))   
-
-print(table(plotdf$gene_type))
-
-upregulated <- plotdf[plotdf$gene_type=="upregulated",]
-downregulated <- plotdf[plotdf$gene_type=="downregulated",]
-
-# Comparison to the paper's results
-sheets <- excel_sheets("RNAseq/GSE153873_AD.vs.Old_diff.genes.xlsx")
-x <- lapply(sheets, function(X) readxl::read_excel(filename, sheet = X))
-resultupreg <- read_excel("RNAseq/GSE153873_AD.vs.Old_diff.genes.xlsx",sheet = sheets[1])
-resultdownreg <- read_excel("RNAseq/GSE153873_AD.vs.Old_diff.genes.xlsx",sheet = sheets[2])
+library("pheatmap")
+library("RColorBrewer")
+sampleDists <- dist(t(assay(vsd)))
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- paste(vsd$condition, vsd$batch, sep="-")
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pdf("batchcorrection_heatmap.pdf", height = 4, width = 5)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+dev.off()
 
 
 
 
-# Plot counts for a single gene -> smallest pvalue
-plotCounts(dds, gene=which.min(res$padj), intgroup="condition")
 
-#Heatmap of the count matrix + cluster
-ntd <- normTransform(dds)
-select <- order(rowMeans(counts(dds,normalized=TRUE)),
-                decreasing=TRUE)[1:15]
-pheatmap(assay(ntd)[select,])
-
-#Principal component plot of the samples
-
-plotPCA(vsd, intgroup=c("condition"))
