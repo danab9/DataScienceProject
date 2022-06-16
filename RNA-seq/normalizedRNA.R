@@ -18,7 +18,7 @@ deseqrna <- DESeqDataSetFromMatrix(rnaseqdata[which(!is.na(ensembl)),], DataFram
 mcols(deseqrna)$basepairs <- genelength[,1]
 
 # Counts normalized per kilobase
-normalizedRNAseq <- fpkm(deseqrna, robust = TRUE)
+normalizedRNAseq <- log2(fpkm(deseqrna, robust = TRUE)+1)
 
 ##EXTRA plots for visualization
 ## bp of non-normalized
