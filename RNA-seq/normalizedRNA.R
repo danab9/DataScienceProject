@@ -1,17 +1,18 @@
 library(stringr)
 library(DESeq2)
 library(EDASeq)
+library('org.Hs.eg.db')
+
+# data
 rnaseqdata <- read.table("RNAseq/GSE153873_summary_count.star.txt", sep = "\t",header = TRUE,row.names = 1)
 colnames(rnaseqdata) <- paste0(data.frame(str_split(colnames(rnaseqdata),'[.]'))[3,],data.frame(str_split(colnames(rnaseqdata),'[.]'))[1,])
 
-
 # get entrez id
-library('org.Hs.eg.db')
 ensembl <- mapIds(org.Hs.eg.db, rownames(rnaseqdata), 'ENSEMBL', 'SYMBOL')
 ensemblnew <- ensembl[!is.na(ensembl)]
 genelength <- getGeneLengthAndGCContent(id=ensemblnew,'hsa')
-getGeneLengthAndGCContent(id=entrez[11],'hsa')
 
+# DESeqData
 condition <- factor(colnames(rnaseqdata))
 deseqrna <- DESeqDataSetFromMatrix(rnaseqdata[which(!is.na(ensembl)),], DataFrame(condition), ~ condition)
 mcols(deseqrna)$basepairs <- genelength[,1]
@@ -19,7 +20,7 @@ mcols(deseqrna)$basepairs <- genelength[,1]
 # Counts normalized per kilobase
 normalizedRNAseq <- fpkm(deseqrna, robust = TRUE)
 
-##EXTRA
+##EXTRA plots for visualization
 ## bp of non-normalized
 boxplot(log2(deseqrna+1), notch=TRUE,
         main = "Non-normalized read counts",
