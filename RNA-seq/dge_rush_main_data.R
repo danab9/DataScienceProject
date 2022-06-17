@@ -49,7 +49,7 @@ old <- dplyr::select(maindata, starts_with("Old"))
 rush_AD <- rush_AD[, 1:12]
 rush_control <- rush_control[,1:10]
 
-# intersect the measured genes from the datasets
+# intersect the measured genes from the data sets
 
 total_control<- merge(old, rush_control,  by= 0 )
 rownames(total_control)<- total_control$Row.names
@@ -62,6 +62,17 @@ total_AD<- dplyr::select(total_AD, -Row.names)
 total_counts<- merge(total_control, total_AD, by=0)
 rownames(total_counts)<- total_counts$Row.names
 total_counts<- dplyr::select(total_counts, -Row.names)
+
+
+total_rush<- merge(rush_control, rush_AD, by=0)
+rownames(total_rush)<- total_rush$Row.names
+total_rush<- dplyr::select(total_rush, -Row.names)
+
+
+total_main<- merge(old, AD, by=0)
+rownames(total_main)<- total_main$Row.names
+total_main<- dplyr::select(total_main, -Row.names)
+
 
 
 #-----------------------------------------------------------------------------------------#
@@ -103,6 +114,23 @@ ggplot(pcaData, aes(PC1, PC2, color=condition, shape = batch)) +
 ggsave("PCA_after_batch_removal.png")
 
 
+# using combat-seq to adjust rush RNA-seq data
+
+library(sva)
+library(edgeR)
+
+combatseq_counts<- ComBat_seq(as.matrix(total_counts), batch = batch, group=condition )
+
+# PCA values
+pca_combatseq<- as.data.frame(prcomp(combatseq_counts)[2]$rotation)
+pca_combatseq$condition<- condition 
+pca_combatseq$batch<- batch
+ggplot(pca_combatseq, aes(PC1, PC2, color=condition, shape = batch)) +
+  geom_point(size=3) 
+
+ggsave("PCA_after_combatseq_batch_correction.png")
+
+
 # heatmap of samples
 
 library("pheatmap")
@@ -118,6 +146,44 @@ pheatmap(sampleDistMatrix,
          clustering_distance_cols=sampleDists,
          col=colors)
 dev.off()
+
+
+
+###---------------------------------------------------------------------##
+# DE only with only rush/main samples 
+
+
+condition <- factor(c(rep("1",ncol(rush_control)),rep("2",ncol(rush_AD))))
+
+# DeSeq2 modeling with batch effect
+dds <- DESeqDataSetFromMatrix(countData = total_rush,
+                              DataFrame(condition), ~ condition)
+
+# Principal Component Analysis
+
+vsd<- vst(dds)
+
+pcaData <- plotPCA(vsd,"condition", returnData=TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, color=condition)) +
+  geom_point(size=3) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
+
+
+# maybe some hidden batch effects in rush ? adjustment needed before comparing them to main samples
+
+# latent factors to be estimated
+dds <- estimateSizeFactors(dds)
+norm.cts<- counts(dds, normalized=TRUE)
+norm.cts <- norm.cts[rowSums(norm.cts) > 0,]
+
+mm<- model.matrix(~ condition, colData(dds))
+mm0 <- model.matrix(~ 1, colData(dds))
+
+n.sv<- num.sv(norm.cts,mm,method="leek")
+
+fit <- sva(norm.cts, mod=mm, mod0=mm0, n.sv= 19)
 
 
 
