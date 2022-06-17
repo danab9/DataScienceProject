@@ -25,9 +25,9 @@ normalizedRNAseq <- log2(fpkm(deseqrna, robust = TRUE)+1)
 boxplot(log2(deseqrna+1), notch=TRUE,
         main = "Non-normalized read counts",
         ylab="log2(read counts)", cex = .6)
-## bp of size-factor normalized values
+## bp of normalized values
 boxplot(log2(normalizedRNAseq +1), notch=TRUE,
-        main = "Size-factor-normalized read counts",
+        main = "Normalized read counts per kb",
         ylab="log2(read counts)", cex = .6)
 
 
