@@ -1,0 +1,136 @@
+ID	Gene Name	Species
+BMI1	BMI1 proto-oncogene, polycomb ring finger(BMI1)	Homo sapiens	
+BANP	BTG3 associated nuclear protein(BANP)	Homo sapiens	
+CTBP2	C-terminal binding protein 2(CTBP2)	Homo sapiens	
+CBFA2T2	CBFA2/RUNX1 partner transcriptional co-repressor 2(CBFA2T2)	Homo sapiens	
+CIPC	CLOCK interacting pacemaker(CIPC)	Homo sapiens	
+CREBBP	CREB binding protein(CREBBP)	Homo sapiens	
+EP300	E1A binding protein p300(EP300)	Homo sapiens	
+EBF4	EBF family member 4(EBF4)	Homo sapiens	
+ETV4	ETS variant transcription factor 4(ETV4)	Homo sapiens	
+FEZF1	FEZ family zinc finger 1(FEZF1)	Homo sapiens	
+GPS2	G protein pathway suppressor 2(GPS2)	Homo sapiens	
+GABPB2	GA binding protein transcription factor subunit beta 2(GABPB2)	Homo sapiens	
+HBP1	HMG-box transcription factor 1(HBP1)	Homo sapiens	
+IKZF2	IKAROS family zinc finger 2(IKZF2)	Homo sapiens	
+JDP2	Jun dimerization protein 2(JDP2)	Homo sapiens	
+KANK2	KN motif and ankyrin repeat domains 2(KANK2)	Homo sapiens	
+KLF15	Kruppel like factor 15(KLF15)	Homo sapiens	
+LIMD1	LIM domain containing 1(LIMD1)	Homo sapiens	
+LHX4	LIM homeobox 4(LHX4)	Homo sapiens	
+MAF1	MAF1 homolog, negative regulator of RNA polymerase III(MAF1)	Homo sapiens	
+MXD4	MAX dimerization protein 4(MXD4)	Homo sapiens	
+MGA	MAX dimerization protein MGA(MGA)	Homo sapiens	
+MXI1	MAX interactor 1, dimerization protein(MXI1)	Homo sapiens	
+MAX	MYC associated factor X(MAX)	Homo sapiens	
+NACC2	NACC family member 2(NACC2)	Homo sapiens	
+PKNOX1	PBX/knotted 1 homeobox 1(PKNOX1)	Homo sapiens	
+PHF19	PHD finger protein 19(PHF19)	Homo sapiens	
+PHF21A	PHD finger protein 21A(PHF21A)	Homo sapiens	
+POU5F1P4	POU class 5 homeobox 1 pseudogene 4(POU5F1P4)	Homo sapiens	
+PWWP2A	PWWP domain containing 2A(PWWP2A)	Homo sapiens	
+RBL1	RB transcriptional corepressor like 1(RBL1)	Homo sapiens	
+RELA	RELA proto-oncogene, NF-kB subunit(RELA)	Homo sapiens	
+RBM14	RNA binding motif protein 14(RBM14)	Homo sapiens	
+SGF29	SAGA complex associated factor 29(SGF29)	Homo sapiens	
+SAP30L	SAP30 like(SAP30L)	Homo sapiens	
+SMAD4	SMAD family member 4(SMAD4)	Homo sapiens	
+SAP25	Sin3A associated protein 25(SAP25)	Homo sapiens	
+TBX6	T-box transcription factor 6(TBX6)	Homo sapiens	
+TAF3	TATA-box binding protein associated factor 3(TAF3)	Homo sapiens	
+TAF8	TATA-box binding protein associated factor 8(TAF8)	Homo sapiens	
+ZXDC	ZXD family zinc finger C(ZXDC)	Homo sapiens	
+ASCC1	activating signal cointegrator 1 complex subunit 1(ASCC1)	Homo sapiens	
+ATF4	activating transcription factor 4(ATF4)	Homo sapiens	
+AJUBA	ajuba LIM protein(AJUBA)	Homo sapiens	
+ATOH8	atonal bHLH transcription factor 8(ATOH8)	Homo sapiens	
+CALCOCO1	calcium binding and coiled-coil domain 1(CALCOCO1)	Homo sapiens	
+CC2D1B	coiled-coil and C2 domain containing 1B(CC2D1B)	Homo sapiens	
+ERN2	endoplasmic reticulum to nucleus signaling 2(ERN2)	Homo sapiens	
+EEF1D	eukaryotic translation elongation factor 1 delta(EEF1D)	Homo sapiens	
+FOXD2	forkhead box D2(FOXD2)	Homo sapiens	
+FOXJ1	forkhead box J1(FOXJ1)	Homo sapiens	
+FOXN3	forkhead box N3(FOXN3)	Homo sapiens	
+FOXO4	forkhead box O4(FOXO4)	Homo sapiens	
+HDGF	heparin binding growth factor(HDGF)	Homo sapiens	
+HDAC4	histone deacetylase 4(HDAC4)	Homo sapiens	
+HIP1	huntingtin interacting protein 1(HIP1)	Homo sapiens	
+HIF3A	hypoxia inducible factor 3 subunit alpha(HIF3A)	Homo sapiens	
+ID3	inhibitor of DNA binding 3, HLH protein(ID3)	Homo sapiens	
+ING5	inhibitor of growth family member 5(ING5)	Homo sapiens	
+ICE2	interactor of little elongation complex ELL subunit 2(ICE2)	Homo sapiens	
+IRF2BP2	interferon regulatory factor 2 binding protein 2(IRF2BP2)	Homo sapiens	
+IL16	interleukin 16(IL16)	Homo sapiens	
+JMJD6	jumonji domain containing 6, arginine demethylase and lysine hydroxylase(JMJD6)	Homo sapiens	
+LBX2	ladybird homeobox 2(LBX2)	Homo sapiens	
+LCOR	ligand dependent nuclear receptor corepressor(LCOR)	Homo sapiens	
+LINC-PINT	long intergenic non-protein coding RNA, p53 induced transcript(LINC-PINT)	Homo sapiens	
+MED11	mediator complex subunit 11(MED11)	Homo sapiens	
+NFKB1	nuclear factor kappa B subunit 1(NFKB1)	Homo sapiens	
+NFATC1	nuclear factor of activated T cells 1(NFATC1)	Homo sapiens	
+NUPR1	nuclear protein 1, transcriptional regulator(NUPR1)	Homo sapiens	
+NSD1	nuclear receptor binding SET domain protein 1(NSD1)	Homo sapiens	
+NCOA5	nuclear receptor coactivator 5(NCOA5)	Homo sapiens	
+NCOA6	nuclear receptor coactivator 6(NCOA6)	Homo sapiens	
+NRIP2	nuclear receptor interacting protein 2(NRIP2)	Homo sapiens	
+OVOL3	ovo like zinc finger 3(OVOL3)	Homo sapiens	
+PER1	period circadian regulator 1(PER1)	Homo sapiens	
+RXRA	retinoid X receptor alpha(RXRA)	Homo sapiens	
+SIRT1	sirtuin 1(SIRT1)	Homo sapiens	
+SALL1	spalt like transcription factor 1(SALL1)	Homo sapiens	
+SPEN	spen family transcriptional repressor(SPEN)	Homo sapiens	
+THRSP	thyroid hormone responsive(THRSP)	Homo sapiens	
+TIMELESS	timeless circadian regulator(TIMELESS)	Homo sapiens	
+TCF12	transcription factor 12(TCF12)	Homo sapiens	
+TFCP2L1	transcription factor CP2 like 1(TFCP2L1)	Homo sapiens	
+TFDP2	transcription factor Dp-2(TFDP2)	Homo sapiens	
+TFEB	transcription factor EB(TFEB)	Homo sapiens	
+TRRAP	transformation/transcription domain associated protein(TRRAP)	Homo sapiens	
+UHRF1	ubiquitin like with PHD and ring finger domains 1(UHRF1)	Homo sapiens	
+USP21	ubiquitin specific peptidase 21(USP21)	Homo sapiens	
+VSX1	visual system homeobox 1(VSX1)	Homo sapiens	
+ZBED4	zinc finger BED-type containing 4(ZBED4)	Homo sapiens	
+ZBED6	zinc finger BED-type containing 6(ZBED6)	Homo sapiens	
+ZMYND8	zinc finger MYND-type containing 8(ZMYND8)	Homo sapiens	
+ZBTB1	zinc finger and BTB domain containing 1(ZBTB1)	Homo sapiens	
+ZBTB12	zinc finger and BTB domain containing 12(ZBTB12)	Homo sapiens	
+ZBTB16	zinc finger and BTB domain containing 16(ZBTB16)	Homo sapiens	
+ZBTB2	zinc finger and BTB domain containing 2(ZBTB2)	Homo sapiens	
+ZBTB34	zinc finger and BTB domain containing 34(ZBTB34)	Homo sapiens	
+ZBTB40	zinc finger and BTB domain containing 40(ZBTB40)	Homo sapiens	
+ZBTB44	zinc finger and BTB domain containing 44(ZBTB44)	Homo sapiens	
+ZFHX2	zinc finger homeobox 2(ZFHX2)	Homo sapiens	
+ZNF137P	zinc finger protein 137, pseudogene(ZNF137P)	Homo sapiens	
+ZNF143	zinc finger protein 143(ZNF143)	Homo sapiens	
+ZNF202	zinc finger protein 202(ZNF202)	Homo sapiens	
+ZNF234	zinc finger protein 234(ZNF234)	Homo sapiens	
+ZNF30	zinc finger protein 30(ZNF30)	Homo sapiens	
+ZNF32	zinc finger protein 32(ZNF32)	Homo sapiens	
+ZNF345	zinc finger protein 345(ZNF345)	Homo sapiens	
+ZNF394	zinc finger protein 394(ZNF394)	Homo sapiens	
+ZNF417	zinc finger protein 417(ZNF417)	Homo sapiens	
+ZNF431	zinc finger protein 431(ZNF431)	Homo sapiens	
+ZNF488	zinc finger protein 488(ZNF488)	Homo sapiens	
+ZNF524	zinc finger protein 524(ZNF524)	Homo sapiens	
+ZNF558	zinc finger protein 558(ZNF558)	Homo sapiens	
+ZNF565	zinc finger protein 565(ZNF565)	Homo sapiens	
+ZNF577	zinc finger protein 577(ZNF577)	Homo sapiens	
+ZNF592	zinc finger protein 592(ZNF592)	Homo sapiens	
+ZNF600	zinc finger protein 600(ZNF600)	Homo sapiens	
+ZNF607	zinc finger protein 607(ZNF607)	Homo sapiens	
+ZNF613	zinc finger protein 613(ZNF613)	Homo sapiens	
+ZNF652	zinc finger protein 652(ZNF652)	Homo sapiens	
+ZNF69	zinc finger protein 69(ZNF69)	Homo sapiens	
+ZNF692	zinc finger protein 692(ZNF692)	Homo sapiens	
+ZNF701	zinc finger protein 701(ZNF701)	Homo sapiens	
+ZNF704	zinc finger protein 704(ZNF704)	Homo sapiens	
+ZNF750	zinc finger protein 750(ZNF750)	Homo sapiens	
+ZNF761	zinc finger protein 761(ZNF761)	Homo sapiens	
+ZNF765	zinc finger protein 765(ZNF765)	Homo sapiens	
+ZNF768	zinc finger protein 768(ZNF768)	Homo sapiens	
+ZNF785	zinc finger protein 785(ZNF785)	Homo sapiens	
+ZNF790	zinc finger protein 790(ZNF790)	Homo sapiens	
+ZNF793	zinc finger protein 793(ZNF793)	Homo sapiens	
+ZNF81	zinc finger protein 81(ZNF81)	Homo sapiens	
+ZNF850	zinc finger protein 850(ZNF850)	Homo sapiens	
+ZHX3	zinc fingers and homeoboxes 3(ZHX3)	Homo sapiens
