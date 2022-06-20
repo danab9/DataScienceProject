@@ -126,10 +126,17 @@ imp <- c( 'EP300', 'CREBBP','TRRAP')
 plotCounts(dds, gene=which.min(res$padj), intgroup="condition")
 
 #Heatmap of the count matrix + cluster
-ntd <- normTransform(dds)
+upregulated <- upregulated[order(upregulated$log2FoldChange,decreasing = TRUE),]
+ntd <- assay(normTransform(dds))
 select <- order(rowMeans(counts(dds,normalized=TRUE)),
                 decreasing=TRUE)[1:60]
-pheatmap(assay(ntd)[select,])
+
+pheatmap(ntd[which(rownames(ntd) %in% upregulated$genes[1:60]),],cluster_cols = FALSE)
+
+library("gplots")
+x11()
+heatmap.2(log2(1+ntd[which(rownames(ntd) %in% upregulated$genes[1:60]),]), scale = "none", col = bluered(200), 
+          trace = "none", density.info = "none",dendrogram = "row")
 
 #Principal component plot of the samples
 
