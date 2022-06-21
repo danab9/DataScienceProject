@@ -21,7 +21,7 @@ mcols(deseqrna)$basepairs <- genelength[,1]
 normalizedRNAseq <- log2(fpkm(deseqrna, robust = TRUE)+1)
 
 #save normalized RNA in a table
-write.table(normalizedRNAseq, 'normalizedRNA.txt', quote=FALSE, append = FALSE, sep = " ", dec = ".",
+write.table(normalizedRNAseq, 'RNAseq/normalizedRNA.txt', quote=FALSE, append = FALSE, sep = " ", dec = ".",
             row.names = TRUE, col.names = TRUE)
 
 ##EXTRA plots for visualization
