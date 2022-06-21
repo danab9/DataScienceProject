@@ -6,7 +6,10 @@ library(dplyr)
 library(apeglm)
 library(readxl)
 library(pheatmap)
+#library(RColorBrewer)
+library(pals)
 
+source('differentialexpression_function.R')
 
 # import data
 rnaseqdata <- read.table("RNAseq/GSE153873_summary_count.star.txt", sep = "\t",header = TRUE,row.names = 1)
@@ -17,26 +20,17 @@ dim(rnaseqdata)
 #rnaseqdata <- log2(rnaseqdata+1)
 
 # Groups
-AD <- select(rnaseqdata, starts_with("AD"))
-young <- select(rnaseqdata, starts_with("Young"))
-old <- select(rnaseqdata, starts_with("Old"))
+AD <- dplyr::select(rnaseqdata, starts_with("AD"))
+young <- dplyr::select(rnaseqdata, starts_with("Young"))
+old <- dplyr::select(rnaseqdata, starts_with("Old"))
 
 # new order of patient
 rnaseqdata <- data.frame(AD,old,young)
 
 
 # First task: Comparing gene expression between AD and old samples
-# http://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html
 
-diffexpression <- function(group1,group2,alpha,tidy=TRUE){
-  condition <- factor(c(rep("G1",ncol(group1)),rep("G2",ncol(group2))))
-  dds <- DESeqDataSetFromMatrix(countData = data.frame(group1,group2),
-                              DataFrame(condition), ~ condition)
-  dds <- DESeq(dds)
-  
-  return(results(dds,alpha=alpha,tidy=tidy)) # to obtain also the genes
-}
-
+# DIFFERENTIAL EXPRESSION
 res <- diffexpression(old,AD,alpha=0.05,tidy=FALSE)
 summary(res)
 
@@ -93,10 +87,14 @@ write.table(as.factor(unlist(upregulated$genes)), 'upregulatedgenes.txt',quote =
 write.table(rnaseqdata[rownames(rnaseqdata)%in%upregulated$genes,], 'upregulated_count.txt', quote=FALSE, append = FALSE, sep = " ", dec = ".",
             row.names = TRUE, col.names = TRUE)
 
+
+write.table(upregulated, 'upregulated_results.txt', quote=FALSE, append = FALSE, sep = " ", dec = ".",
+            row.names = TRUE, col.names = TRUE)
+
 write.table(downregulated$genes, 'downregulationgenes.txt',quote = FALSE, append = FALSE, sep = " ", dec = ".",
             row.names = FALSE, col.names = FALSE)
 
-write.table(rnaseqdata[rownames(rnaseqdata)%in%upregulated$genes,], 'upregulated_count.txt', quote = FALSE, append = FALSE, sep = " ", dec = ".",
+write.table(downregulated, 'downregulated_results.txt', quote = FALSE, append = FALSE, sep = " ", dec = ".",
             row.names = TRUE, col.names = TRUE)
 
 
@@ -128,6 +126,7 @@ plotCounts(dds, gene=which.min(res$padj), intgroup="condition")
 #Heatmap of the count matrix + cluster
 upregulated <- upregulated[order(upregulated$log2FoldChange,decreasing = TRUE),]
 ntd <- assay(normTransform(dds))
+ntd <- assay(dds)
 select <- order(rowMeans(counts(dds,normalized=TRUE)),
                 decreasing=TRUE)[1:60]
 
@@ -137,7 +136,6 @@ library("gplots")
 x11()
 heatmap.2(log2(1+ntd[which(rownames(ntd) %in% upregulated$genes[1:60]),]), scale = "none", col = bluered(200), 
           trace = "none", density.info = "none",dendrogram = "row")
-
 #Principal component plot of the samples
 
 plotPCA(vsd, intgroup=c("condition"))
