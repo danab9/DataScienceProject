@@ -11,7 +11,7 @@ library(ggplot2)
 # Rush Data
 
 # female AD case, 29 cases and 39672 genes
-rush_AD <- read.csv("/home/rosa/DataScienceProject/RushData/all_counts_femaleAD.csv",  header=TRUE)
+rush_AD <- read.csv("/home/rosa/DataScienceProject/RushData/onlyfemale/all_counts_femaleAD.csv",  header=TRUE)
 rush_AD <- rush_AD[,2:ncol(rush_AD)]
 rush_AD<- dplyr::select(rush_AD, -c(ensembl_gene_id, gene_biotype))
 rownames(rush_AD)<- rush_AD$hgnc_symbol
@@ -20,7 +20,7 @@ rush_AD <- dplyr::select(rush_AD, -hgnc_symbol)
 
 
 # female control cases, 13 samples and 39670 genes
-rush_control <- read.csv("/home/rosa/DataScienceProject/RushData/all_counts_control.csv",  header=TRUE)
+rush_control <- read.csv("/home/rosa/DataScienceProject/RushData/onlyfemale/all_counts_control.csv",  header=TRUE)
 rush_control <- rush_control[,2:ncol(rush_control)]
 rush_control <- dplyr::select(rush_control, -c(ensembl_gene_id, gene_biotype))
 rownames(rush_control)<- rush_control$hgnc_symbol
@@ -185,7 +185,9 @@ n.sv<- num.sv(norm.cts,mm,method="leek")
 
 fit <- sva(norm.cts, mod=mm, mod0=mm0, n.sv= 19)
 
-
+dds$condition.int <- as.integer(dds$condition)
+plot(fit$sv[,1:2], col=dds$condition.int, cex=2,
+     xlab="SV1", ylab="SV2")
 
 
 
