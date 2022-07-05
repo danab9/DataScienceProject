@@ -1,5 +1,7 @@
 ## Differential Gene Expression Analysis For Rush 
-
+library(tximport)
+library(dplyr)
+library(ggplot2)
 ## importing files 
 dir.ADM<- "/home/rosa/rush_data/ADmale"
 dir.ADF<- "/home/rosa/rush_data/ADfemale"
@@ -21,6 +23,31 @@ names(files.CF) <-overview.CF$Accession
 files.CM <- file.path(dir.CM, paste0(overview.CM$file_name, ".tsv"))
 names(files.CM) <-overview.CM$Accession
 
+
+
+
+
+
+
+## age to 0: under 90, 1: over 90 
+change.age.column <- function(overview, binary=FALSE){
+  overview$age <- as.numeric(gsub("[A-z]","", overview$Biosample.age))
+  if (binary){
+    
+    overview <- mutate(overview, age= age < 90 )
+ 
+  }
+  return(overview)
+  }
+
+overview.CF <- change.age.column(overview.CF,T)
+overview.CM <- change.age.column(overview.CM,T)
+overview.ADF <- change.age.column(overview.ADF,T)
+overview.ADM <- change.age.column(overview.ADM,T)
+
+
+
+
 # number of samples
 number.controlsamples <- length(files.CF)+ length(files.CM)
 number.ADsamples<-  length(files.ADF)+ length(files.ADM)
@@ -38,7 +65,7 @@ txi.rsem$length = txi.rsem$length[!zero_length_and_unexpressed,]
 txi.rsem$abundance = txi.rsem$abundance[!zero_length_and_unexpressed,]
 txi.rsem$counts = txi.rsem$counts[!zero_length_and_unexpressed,]
 
-# create col data : condition and sex of samples
+# create col data : condition sex, age of samples
 
 condition<- factor(c(rep("C", length(files.CF) + length(files.CM) ),
                     rep("AD",length(files.ADF)+  length(files.ADM))
@@ -51,26 +78,24 @@ sex<- factor(c(rep("F", length(files.CF)),
                rep("M", length(files.ADM))
 ))
 
-sampletable <- data.frame(condition= condition, sex=sex)
+age<- factor(c( overview.CF$age,  overview.CM$age, overview.ADF$age, overview.ADM$age ))
 
-rownames(sampletable)<- colnames(txi.rsem$counts)
+
+sampletable <- data.frame(condition= condition, sex=sex, age=age)
 
 
 # create dds object (summarizedexperiment obj)
 
-dds <- DESeqDataSetFromTximport(txi = txi.rsem ,colData = sampletable ,design = ~ condition)
-dds.all <-  DESeqDataSetFromTximport(txi = txi.rsem ,colData = sampletable ,design = ~ sex+ condition)
-
-#filtering 
+dds <- DESeqDataSetFromTximport(txi = txi.rsem ,colData = sampletable ,design = ~ age + condition)
+#pre-filtering 
 # ERCC counts, no genes
 dds<- dds[1:(nrow(dds)-90),]
 # low gene expression measurements across all samples
 dds <- dds[ rowSums(counts(dds)) > 1, ]
 
-
 dds.female <- dds[, which(sex=="F")]
-dds.male<- dds[, which(sex=="M")]
-
+dds.male<- dds[, which(sex=="M")] #  & 
+dds.male <- DESeq(dds[, which(sex=="M")])
 # data exploration
 
 # variance stabilizing transformation. controlling great variance across the mean ( negative binomial data)
@@ -110,9 +135,9 @@ plot_AD<- create_log2_comparsion(c(42,71))
 
 #PCA
 
-pcaData <- plotPCA(vsd, intgroup= c("condition", "sex"), returnData=TRUE)
+pcaData <- plotPCA(vsd, intgroup= c("condition", "age"), returnData=TRUE)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
-ggplot(pcaData, aes(PC1, PC2, color=condition, shape=sex)) +
+ggplot(pcaData, aes(PC1, PC2, color=age, shape=condition)) +
   geom_point(size=3) +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) 
@@ -162,8 +187,7 @@ dev.off()
 
 ### differential gene expression analysis
 
-dds.all <- DESeq(dds.all)
-res<- results(dds.all,alpha=0.05)
+res<- results(dds.male,alpha=0.05)
 
 resOrdered <- res[order(res$pvalue),]
 summary(res)
@@ -171,22 +195,37 @@ summary(res)
 pvalues <- p.adjust(res$pvalue, method = "BH")
 sum(pvalues<0.05,na.rm = T)
 
-# no diff. expr. gene detected !!!
+# only 9  diff. expr. gene detected !!!
 
 # MA plot
 plotMA(res, ylim=c(-4,4))
 
-resNorm <- lfcShrink(dds, coef=2, type="normal")
+resNorm <- lfcShrink(dds.male, coef=2, type="normal")
 plotMA(resNorm, ylim=c(-1.5,1.5),main='Normal')
 
 
 
-plotdf<- data_frame(log2FoldChange=res$log2FoldChange, padj= res$padj,genes=rownames(res))
+plotdf<- data_frame(log2FoldChange=res$log2FoldChange, padj= res$padj,genes=gsub("\\..*", "", rownames(res)))
 plotdf<- plotdf %>%
   mutate(gene_type = case_when(log2FoldChange > 0 & pvalues < 0.05 ~ "upregulated",
                                log2FoldChange < 0 & pvalues < 0.05 ~ "downregulated",
                                TRUE ~ "not significant"))   
 print(table(plotdf$gene_type))
 
+dif.genes<- plotdf[which(plotdf$gene_type !="not significant"), ]
+
+
+library(biomaRt)
+mart <- useMart(dataset="hsapiens_gene_ensembl","ensembl")
+G_list <- getBM(filters= "ensembl_gene_id", 
+                attributes=c( 'ensembl_gene_id',
+                              'hgnc_symbol', 'gene_biotype'),
+                values= dif.genes$genes,
+                mart= mart)
+
+dif.genes<- left_join(dif.genes, G_list, by= c( "genes" = "ensembl_gene_id" ))
+
+
+write.csv(dif.genes, file ="diff_genes_maleRUSH.csv", row.names = F)
 
 
