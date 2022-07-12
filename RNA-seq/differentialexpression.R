@@ -6,10 +6,11 @@ library(dplyr)
 library(apeglm)
 library(readxl)
 library(pheatmap)
-#library(RColorBrewer)
 library(pals)
-
+library(PerformanceAnalytics)
+library(corrplot)
 source('differentialexpression_function.R')
+
 
 # import data
 rnaseqdata <- read.table("RNAseq/GSE153873_summary_count.star.txt", sep = "\t",header = TRUE,row.names = 1)
@@ -27,13 +28,18 @@ old <- dplyr::select(rnaseqdata, starts_with("Old"))
 # new order of patient
 rnaseqdata <- data.frame(AD,old,young)
 
+#correlation
+c <- cor(rnaseqdata)
+corrplot(c)
+
 
 # First task: Comparing gene expression between AD and old samples
 
 # DIFFERENTIAL EXPRESSION
 res <- diffexpression(old,AD,alpha=0.05,tidy=FALSE)
 summary(res)
-
+dds <- diffexpression(old,AD,alpha=0.05,tidy=FALSE,result=FALSE)
+#condition <- factor(c(rep("old",ncol(old)),rep("AD",ncol(AD))))
 #421 genes with significant upregulation in AD, while 434
 # had significant downregulation -> 855 significant up/downregulated
 
@@ -43,28 +49,13 @@ resOrdered <- res[order(res$pvalue),]
 pvalues <- p.adjust(res$pvalue, method = "BY")
 sum(pvalues<0.05,na.rm = T)
 
-
+## VISUALIZAION
 # MA plot
 plotMA(res, ylim=c(-4,4))
-
-resNorm <- lfcShrink(res, coef=2, type="normal")
+#Alternative shrinkage estimators
+resNorm <- lfcShrink(dds, coef=2, type="normal")
 plotMA(resNorm, ylim=c(-1.5,1.5),main='Normal')
 
-
-#434 downregulated, 421 upregulated
-# plotdf<- data_frame(log2FoldChange=res$log2FoldChange, padj= res$padj,genes=rownames(res))
-# 
-# # OR
-# plotdf<- data_frame(log2FoldChange=res$log2FoldChange, padj= res$padj)
-# plotdf<- plotdf %>%
-#   mutate(gene_type = case_when(log2FoldChange > 0.661 & pvalues < 0.05 ~ "upregulated",
-#                                log2FoldChange < -0.615 & pvalues < 0.05 ~ "downregulated",
-#                                TRUE ~ "not significant"))   
-# 
-# plotdf<- plotdf %>%
-#   mutate(gene_type = case_when(log2FoldChange >= 0.681 & padj < 0.05 ~ "upregulated",
-#                                log2FoldChange <= -0.6869 & padj < 0.05 ~ "downregulated",
-#                                TRUE ~ "not significant"))   
 
 plotdf<- data_frame(log2FoldChange=res$log2FoldChange, padj= res$padj, Yekutielipval=pvalues,pval=res$pvalue, genes=rownames(res))
 plotdf<- plotdf %>%
@@ -78,6 +69,18 @@ upregulated <- plotdf[plotdf$gene_type=="upregulated",]
 upregulated <- upregulated[order(upregulated$padj),]
 downregulated <- plotdf[plotdf$gene_type=="downregulated",]
 downregulated <- downregulated[order(downregulated$padj),]
+
+
+
+# Comparison to the paper's results
+#434 downregulated, 421 upregulated
+sheets <- excel_sheets("RNAseq/GSE153873_AD.vs.Old_diff.genes.xlsx")
+resultupreg <- read_excel("RNAseq/GSE153873_AD.vs.Old_diff.genes.xlsx",sheet = sheets[1])
+resultdownreg <- read_excel("RNAseq/GSE153873_AD.vs.Old_diff.genes.xlsx",sheet = sheets[2])
+
+
+table(plotdf[plotdf$genes %in% unlist(resultupreg[,1]),"gene_type"])
+table(plotdf[plotdf$genes %in% unlist(resultdownreg[,1]),"gene_type"])
 
 
 # Save up-/downregulated count matrix and up-/downregulated genes 
@@ -97,31 +100,12 @@ write.table(downregulated$genes, 'downregulationgenes.txt',quote = FALSE, append
 write.table(downregulated, 'downregulated_results.txt', quote = FALSE, append = FALSE, sep = " ", dec = ".",
             row.names = TRUE, col.names = TRUE)
 
-
-# Comparison to the paper's results
-#434 downregulated, 421 upregulated
-sheets <- excel_sheets("RNAseq/GSE153873_AD.vs.Old_diff.genes.xlsx")
-resultupreg <- read_excel("RNAseq/GSE153873_AD.vs.Old_diff.genes.xlsx",sheet = sheets[1])
-resultdownreg <- read_excel("RNAseq/GSE153873_AD.vs.Old_diff.genes.xlsx",sheet = sheets[2])
-
-# overlap of up-/downregulated genes in own results and papers results  
-length(intersect(upregulated$genes,unlist(resultupreg[,1])))
-#314 of 421
-length(intersect(downregulated$genes,unlist(resultdownreg[,1])))
-#344 of 434
-
-table(plotdf[plotdf$genes %in% unlist(resultupreg[,1]),"gene_type"])
-table(plotdf[plotdf$genes %in% unlist(resultdownreg[,1]),"gene_type"])
-
-# a lot of overlaps but also some up/downregulated genes but also a lot of genes missing
-# in the 50 most significant downregulated genes: overlap of 49 genes
-# in the 50 most significant upregulated genes: overlap of 45 genes
-
 #three main genes from the paper
 imp <- c( 'EP300', 'CREBBP','TRRAP')
 
 # Plot counts for a single gene -> smallest pvalue
 plotCounts(dds, gene=which.min(res$padj), intgroup="condition")
+
 
 #Heatmap of the count matrix + cluster
 upregulated <- upregulated[order(upregulated$log2FoldChange,decreasing = TRUE),]
@@ -136,6 +120,42 @@ library("gplots")
 x11()
 heatmap.2(log2(1+ntd[which(rownames(ntd) %in% upregulated$genes[1:60]),]), scale = "none", col = bluered(200), 
           trace = "none", density.info = "none",dendrogram = "row")
-#Principal component plot of the samples
-
+##Principal component plot of the samples
+#Related to the distance matrix is the PCA plot, which shows the samples in the
+#2D plane spanned by their first two principal components. This type of plot is
+#useful for visualizing the overall effect of experimental covariates and batch effects.
+vsd <- vst(dds, blind=FALSE)
+vsd$condition <- factor(c(rep("old",ncol(old)),rep("AD",ncol(AD))))
+levels(vsd$condition) <- c('old','AD')
 plotPCA(vsd, intgroup=c("condition"))
+
+# other differential expression
+res <- diffexpression(young,AD,alpha=0.05,tidy=FALSE)
+summary(res)
+
+res <- diffexpression(young,old,alpha=0.05,tidy=FALSE)
+summary(res)
+
+res <- diffexpression(young,old,AD,alpha=0.05,tidy=FALSE)
+summary(res)
+
+plotdf<- data_frame(log2FoldChange=res$log2FoldChange, padj= res$padj,pval=res$pvalue, genes=rownames(res))
+plotdf<- plotdf %>%
+  mutate(gene_type = case_when(log2FoldChange > 0 & padj < 0.05 ~ "upregulated",
+                               log2FoldChange < 0 & padj < 0.05 ~ "downregulated",
+                               TRUE ~ "not significant"))   
+print(table(plotdf$gene_type))
+
+#up and downregulated genes, ordered by p_adjust
+upregulatedAll <- plotdf[plotdf$gene_type=="upregulated",]
+upregulatedAll <- upregulated[order(upregulated$padj),]
+downregulatedAll <- plotdf[plotdf$gene_type=="downregulated",]
+downregulatedAll <- downregulated[order(downregulated$padj),]
+
+write.table(upregulatedAll, 'upregulatedAll.txt', quote=FALSE, append = FALSE, sep = " ", dec = ".",
+            row.names = TRUE, col.names = TRUE)
+
+write.table(downregulatedAll, 'downregulatedAll.txt',quote = FALSE, append = FALSE, sep = " ", dec = ".",
+            row.names = FALSE, col.names = FALSE)
+
+
