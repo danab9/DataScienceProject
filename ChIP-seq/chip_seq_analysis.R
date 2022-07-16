@@ -1,174 +1,282 @@
-## differential enrichdfent analysis
-## codfparing nordfalized signal between AD and old for each peak 
-## dfethod like in paper: Wilc. Rank test , two-sided, pval =0.05 
+## differential enrichdment analysis
+## comparing normalized signal between AD and old for each peak 
+## method like in paper: Wilcoxon Rank sum test , two-sided, pval =0.05 
 
-df <- read.table("~/Downloads/iCluster_mat_12k_Rosa.txt")
+
+
+df <- read.table("~/Downloads/mat_H3K9ac.txt")
 AD_index <- c(22:30)
 old_index <- c(12:21)
 young_index <- c(4:11)
-
-
-pvals <- c()
-foldchanges<- c()
-for (i in 1: nrow(df)){
-  grp2 <- as.numeric(df[i, AD_index])
-  grp1<- as.numeric( df[i, old_index])
-  fc<- mean(grp2) -mean(grp1)
-  log2FC<- sign(fc)* log2(abs(fc))
-  p<- wilcox.test(grp1, grp2)$p.value
-  pvals[i] <- p
-  foldchanges[i] <- log2FC
-  
-}
 
 colnames(df)[32] <- "distance.to.TSS"
 colnames(df)[34] <- "gene.name"
 colnames(df)[33] <- "region"
 
 
-df$pval <- as.numeric(pvals)
-df$log2FC <- as.numeric(foldchanges)
-
-adj.pval<- p.adjust(df$pval, method="BH")
-df$adj.pval <- adj.pval
-
-
-df<- df %>%
-  mutate(status = case_when(log2FC > 0 & pval < 0.05 ~ "gain",
-                               log2FC < 0 & pval < 0.05 ~ "loss",
- 
-                              TRUE ~ "not significant"))   
-
-df<- df %>%
-  mutate(status2 = case_when( pval < 0.05 ~ "significant",
-              
-                            TRUE ~ "not significant"))   
-
-
-
-df<- df %>%
-  mutate(TSS = case_when( distance.to.TSS <5 ~ "<5",
-                          distance.to.TSS > 5  & distance.to.TSS <= 25 ~ "5-25",
-                          distance.to.TSS > 25  & distance.to.TSS <= 50 ~ "25-50",
-                          distance.to.TSS > 50  & distance.to.TSS <= 100 ~ "50-100",
-                          distance.to.TSS > 100 & distance.to.TSS <= 300 ~ "100-300",
-                          distance.to.TSS > 300 ~ ">300",
-                          
-                          ) )   
-
-
-
-
-# volcanoplot
-ggplot(df, aes(y= - log10(pval), x=log2FC, color=status2)) + geom_point() + xlim(-10,10)
-
-# histogram
-ggplot(filter(df), aes(x=log2FC, color=status2)) + geom_density()
-  geom_histogram()
-
-
-g<-filter(df, status!="not significant" ) %>% group_by(TSS) %>% summarise(count=sum(status=="gain")) %>% cbind(status=rep("gain", 6))
-l<- filter(df, status!="not significant" ) %>% group_by(TSS) %>% summarise(count=sum(status=="loss")) %>% cbind(status=rep("loss", 6))
-plot.df <- rbind(g,l)
-plot.df$TSS <- factor(plot.df$TSS, levels = c("<5", "5-25", "25-50", "50-100", "100-300", ">300"))   
+execute_wilcox_test <- function(df, name, index1,index2){
+  name.pv <- paste(name, "pval", sep=".")
+  name.fc <- paste(name, "log2FC", sep=".")
+  pvals <- c()
+  foldchanges<- c()
+  for (i in 1: nrow(df)){
+    grp2 <- as.numeric(df[i, index2])
+    grp1<- as.numeric( df[i, index1])
+    fc<- (mean(grp2)/mean(grp1))
+    log2FC<- log2(fc)
+    p<- wilcox.test(grp1, grp2)$p.value
+    pvals[i] <- p
+    foldchanges[i] <- log2FC
     
-ggplot(plot.df, aes(x = TSS, y=count ,fill = status)) + 
-  geom_bar(stat="identity", color = "black") +
-  scale_fill_manual(values = c( "#9E9AC8", "#6A51A3")) +
-  guides(fill = guide_legend(title = "")) +
-  ylab("") 
+  }
+  df[, name.pv] <- pvals
+  df[, name.fc ]<- foldchanges
+  
+  
+  if (name =="ADO"){
+    df<- df %>%
+      mutate(ADO.status = case_when(ADO.log2FC > 0 & ADO.pval < 0.05 ~ "gain",
+                                     ADO.log2FC < 0 & ADO.pval < 0.05 ~ "loss",
+                                     TRUE ~ "not significant"))  
+    print(table(df$ADO.status))
+    
+  }
+  else{
+    df<- df %>%
+      mutate(OY.status = case_when(OY.log2FC > 0 & OY.pval < 0.05 ~ "gain",
+                                     OY.log2FC < 0 & OY.pval < 0.05 ~ "loss",
+                                     
+                                     TRUE ~ "not significant"))   
+    print(table(df$OY.status))
+    
+  }
+ 
+  return(df)
+}
+
+
+df <- execute_wilcox_test(df, "ADO", old_index, AD_index)
+df <- execute_wilcox_test(df, "OY", young_index, old_index)
+
+
+
+## plotting result
+
+
+# 1. volcano plot 
+create_volcanoplot <- function(df, name){
+  name.pval <- paste(name, "pval", sep=".")
+  name.fc <- paste(name, "log2FC", sep=".")
+  data <-df[, c(name.pval, name.fc)]
+  colnames(data)<- c("pval", "log2FC")  
+  data <- data %>%
+      mutate(status2 = case_when( pval < 0.05 ~ "significant",
+                                  
+                                  TRUE ~ "not significant"))   
+    
+  plot <- ggplot(data, aes(y= - log10(pval), x=log2FC, color=status2)) + geom_point()+ labs(colour=NULL)
+  return (plot)
+  
+}
+
+create_volcanoplot(df, "ADO")
+
+#2 distribution of log2FC 
+create_FC_dist <- function(df, name, type="density"){
+  name.pval <- paste(name, "pval", sep=".")
+  name.fc <- paste(name, "log2FC", sep=".")
+  data <-df[, c(name.pval, name.fc)]
+  colnames(data)<- c("pval", "log2FC")  
+  data <- data %>%
+    mutate(status2 = case_when( pval < 0.05 ~ "significant",
+                                
+                                TRUE ~ "not significant"))   
+  
+  if (type == "density"){
+    return( ggplot(data, aes(x=log2FC, color=status2)) + geom_density() + labs(color=NULL))
+  }
+  else {
+    return(ggplot(data, aes(x=log2FC, color=status2)) +   geom_histogram() + labs(color=NULL))
+  }
+  
+}
+
+create_FC_dist(df, "ADO", "hist") + xlim(-5,5) + ylab("")
+
+# distance to TSS of the signif. peaks
+
+create_barchart_TSS <- function(df, name){
+  name.status <- paste(name, "status", sep=".")
+  data <-df[, c(name.status, "distance.to.TSS")]
+  colnames(data)<- c("status", "distance.to.TSS")  
+  data<- data %>%
+    mutate(TSS = case_when( distance.to.TSS <=5 ~ "<5",
+                            distance.to.TSS > 5  & distance.to.TSS <= 100 ~ "5-100",
+                            distance.to.TSS > 100 & distance.to.TSS <= 500 ~ "100-500",
+                            distance.to.TSS > 500 & distance.to.TSS <= 1000 ~ "500-1000",
+                            distance.to.TSS > 1000 ~ ">1000"
+                            
+    ) )  
+  data$TSS <- factor(data$TSS, levels = c("<5", "5-100", "100-500", "500-1000", ">1000"))   
+  
+  gains<-filter(data, status!="not significant" ) %>% group_by(TSS) %>% summarise(count=sum(status=="gain")) %>% cbind(status=rep("gain", 5))
+  losses<- filter(data, status!="not significant" ) %>% group_by(TSS) %>% summarise(count=sum(status=="loss")) %>% cbind(status=rep("loss", 5))
+  plot.df <- rbind(gains,losses)
+  
+  plot <- ggplot(plot.df, aes(x = TSS, y=count ,fill = status)) + 
+    geom_bar(stat="identity", color = "black") +
+    scale_fill_manual(values = c( "#9E9AC8", "#6A51A3")) +
+    guides(fill = guide_legend(title = "")) +
+    ylab("") 
+  
+  return(plot)
+  
+}
+
+test<-create_barchart_TSS(df, "ADO")
 
 ## ANOVA test
 
-## checking normality 
-library(car)
 
-shapiro.res<- c()
-levene.res<- c()
-anova.res <- c()
-for (i in 1:nrow(df)){
-  grp1 <- data.frame(count=as.numeric(df[i, AD_index]), group=rep("AD", length(AD_index)))
-  grp2 <- data.frame(count=as.numeric(df[i, old_index]), group=rep("old", length(old_index)))
-  grp3 <- data.frame(count=as.numeric(df[i, young_index]), group=rep("young", length(young_index)))
-
-  helper<- rbind(grp1,grp2,grp3)
-
-  res_aov <- aov(count ~ group, data=helper)
+execute.ANOVA.test <- function(df, idx1,idx2,idx3){
+  ## checking assumption of normality and equal sample variances
   
-  anova.res[i] <- unlist(summary(res_aov))[9]
-  #shapiro.res[i]<- shapiro.test(res_aov$residuals)$p.value
-  #levene.res[i] <- leveneTest(count ~group, data=helper)$Pr[1]
+  shapiro.res<- c()
+  levene.res<- c()
+  anova.res <- c()
+  for (i in 1:nrow(df)){
+    grp1 <- data.frame(count=as.numeric(df[i, idx1]), group=rep("AD", length(idx1)))
+    grp2 <- data.frame(count=as.numeric(df[i, idx2]), group=rep("old", length(idx2)))
+    grp3 <- data.frame(count=as.numeric(df[i, idx3]), group=rep("young", length(idx3)))
+    
+    together<- rbind(grp1,grp2,grp3)
+    
+    res_aov <- aov(count ~ group, data=together)
+    
+    anova.res[i] <- unlist(summary(res_aov))[9]
+    shapiro.res[i]<- shapiro.test(res_aov$residuals)$p.value
+    levene.res[i] <- leveneTest(count ~group, data=together)$Pr[1]
+  }
+  
+  adj.anova<- p.adjust(anova.res, method="BH")
+  
+  results <- data.frame( anova.pval = anova.res, shapiro.pval = shapiro.res, levene.pval = levene.res )
+  
+  return(results)
 }
 
-length(which(anova.res < 0.05))
-#adj.anova<- p.adjust(anova.res, method="BH")
-# qqplot<- qqPlot(res_aov$residuals, id = FALSE )
 
-df <- cbind(df, anova.pval = anova.res)
+### plotting to check normality 
+  #library(car)
+  # qqplot<- qqPlot(res_aov$residuals, id = FALSE )
+
+anova.df <- execute.ANOVA.test(df, young_index, old_index, AD_index)
+failed.normality.test <- mean(anova.df$shapiro.pval < 0.05)
+failed.eq.sample.variance <- mean(anova.df$levene.pval < 0.05)
+
 
 # intersection of anova and wilcoxon test
+df <- cbind(df, anova.pval=anova.df$anova.pval)
 
-disease.specific<- filter(df, pval <0.05 & anova.pval <0.05)
+signif.anova.peaks <- nrow(filter(df, anova.pval <0.05))
+disease.specific<- filter(df, ADO.pval <0.05 & anova.pval <0.05)
+age.regulated <- filter(df,OY.pval <0.05 & ADO.pval >= 0.05 & anova.pval <0.05 )
+age.dysregulated <- filter(df, (ADO.pval <0.05 | OY.pval <0.05) & anova.pval <0.05)
 
 ##boxplot 
-
-gain.dis.spec <- filter(disease.specific, status=="gain")
-loss.dis.spec <- filter(disease.specific, status=="loss")
-
-loss.all.young <-unlist(loss.dis.spec[, young_index])
-loss.all.old <- unlist(loss.dis.spec[, old_index])
-loss.all.AD <- unlist(loss.dis.spec[, AD_index])
-loss.labels<- c( rep("young", length(loss.all.young)), 
-            rep("old", length(loss.all.old)),
-            rep("AD", length(loss.all.AD))
-            
-)
-
-
-
-all.young <-unlist(gain.dis.spec[, young_index])
-all.old <- unlist(gain.dis.spec[, old_index])
-all.AD <- unlist(gain.dis.spec[, AD_index])
-labels<- c( rep("young", length(all.young)), 
-            rep("old", length(all.old)),
-            rep("AD", length(all.AD))
+create.boxplot <- function(data, name ){
+  name.status <- paste(name, "status", sep=".")
   
-)
+  gain.df<- data[which(data[, name.status] == "gain"),]
+  loss.df<- data[which(data[, name.status] == "loss"),]
+  
+  loss.all.young <-unlist(loss.df[, young_index])
+  loss.all.old <- unlist(loss.df[, old_index])
+  loss.all.AD <- unlist(loss.df[, AD_index])
+  loss.labels<- c( rep("young", length(loss.all.young)), 
+                   rep("old", length(loss.all.old)),
+                   rep("AD", length(loss.all.AD))
+                   
+  )
+  
+  all.young <-unlist(gain.df[, young_index])
+  all.old <- unlist(gain.df[, old_index])
+  all.AD <- unlist(gain.df[, AD_index])
+  labels<- c( rep("young", length(all.young)), 
+              rep("old", length(all.old)),
+              rep("AD", length(all.AD))
+              
+  )
+  
+  gain.length <- length(all.young)+ length(all.old)+ length(all.AD)
+  loss.length <- length(loss.all.young)+ length(loss.all.old)+ length(loss.all.AD)
+  
+  boxplot.df <- data.frame(counts= c(all.young, all.old, all.AD, loss.all.young, loss.all.old, loss.all.AD), 
+                           group=c(labels, loss.labels),
+                           status= c(rep("gain", gain.length ),rep("loss", loss.length ) ))
+  
+  
+  plot<- ggplot(boxplot.df, aes(x=group, y=counts, color=group)) +
+    geom_boxplot()  + 
+    theme( axis.text.x = element_blank())+   
+    xlab("")+
+    ylab("")+
+    facet_grid(~status)
+  
+  return(plot)
+  
+  
+}
 
-gain.length <- length(all.young)+ length(all.old)+ length(all.AD)
-loss.length <- length(loss.all.young)+ length(loss.all.old)+ length(loss.all.AD)
 
-
-boxplot.df <- data.frame(counts= c(all.young, all.old, all.AD, loss.all.young, loss.all.old, loss.all.AD), 
-                         group=c(labels, loss.labels),
-                         status= c(rep("gain", gain.length ),rep("loss", loss.length ) ))
-
-
-ggplot(boxplot.df, aes(x=interaction(group,status), y=counts, color=group)) +
-  geom_boxplot()
-
+create.boxplot(disease.specific, "ADO")
 
 
 write.csv(disease.specific, file= "~/disease_spec_enriched_peaks.csv", row.names = F)
 
 
-# comparing it to DEG genes
-down_DEG <- read.table("/home/rosa/DataScienceProject/RNA-seq/UpDownreg_genes/downregulationgenes.txt")
-up_DEG <- read.table("/home/rosa/DataScienceProject/RNA-seq/UpDownreg_genes/upregulatedgenes.txt")
+library(ggvenn)# comparing it to DEG genes
+down.path <- "/home/rosa/DataScienceProject/RNA-seq/UpDownreg_genes/downregulationgenes.txt"
+up.path <- "/home/rosa/DataScienceProject/RNA-seq/UpDownreg_genes/upregulatedgenes.txt"
+save.path <- "~/intersection_H3K9ac.csv"
 
-down.inter.genes<- intersect(down_DEG$V1, disease.specific$gene.name)
-up.inter.genes<- intersect(up_DEG$V1, disease.specific$gene.name)
 
-gene.label <- c(rep("down", length(down.inter.genes)), rep("up", length(up.inter.genes)))
-
-down.status<- filter(disease.specific, gene.name %in% down.inter.genes)$status 
-up.status<- filter(disease.specific, gene.name %in% up.inter.genes)$status 
-status.label <- c(down.status, up.status)
-
-intersection.df <- data.frame(gene.name = c(down.inter.genes, up.inter.genes),
-                              DEG.status= gene.label,
-                              chip.status = status.label
+comapre_chip_rnaseq  <- function(data, up.path, down.path, save.path){
+  
+  down_DEG <- read.table(down.path)
+  up_DEG <- read.table(up.path)
+  
+  down.inter.genes<- intersect(down_DEG$V1, disease.specific$gene.name)
+  up.inter.genes<- intersect(up_DEG$V1, disease.specific$gene.name)
+  
+  gene.label <- c(rep("down", length(down.inter.genes)), rep("up", length(up.inter.genes)))
+  
+  down.status<- filter(filter(disease.specific, gene.name %in% down.inter.genes) , !duplicated(gene.name))$ADO.status 
+  up.status<- filter(filter(disease.specific, gene.name %in% up.inter.genes), !duplicated(gene.name))$ADO.status 
+  
+  status.label <- c(down.status, up.status)
+  
+  gain.gene.names <- filter(filter(disease.specific, ADO.status=="gain") , !duplicated(gene.name))$gene.name
+  loss.gene.names <- filter(filter(disease.specific, ADO.status=="loss") , !duplicated(gene.name))$gene.name
+  
+  
+  
+  intersection.df <- data.frame(gene.name = c(down.inter.genes, up.inter.genes),
+                                DEG.status= gene.label,
+                                chip.status = status.label
                                 
-                                )
+  )
+  
+  write.csv(intersection.df, file=save.path, row.names = F)
+  
 
-write.csv(intersection.df, file="~/intersection_rnaseq_chipseq.csv", row.names = F)
+  plot<- ggvenn(list(downDEG=down_DEG$V1 , upDEG=up_DEG$V1 ,loss=loss.gene.names,gain=gain.gene.names  ))
+  
+  return(plot)
+}
+
+comapre_chip_rnaseq(disease.specific, up.path, down.path , save.path)
+
+
+
+
