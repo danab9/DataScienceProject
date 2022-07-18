@@ -51,7 +51,10 @@ sum(pvalues<0.05,na.rm = T)
 
 ## VISUALIZAION
 # MA plot
-plotMA(res, ylim=c(-4,4))
+png(file = "MAplot.png", height = 600,width=600)
+plotMA(res, ylim=c(-3,3),colSig='red',colLine='red',alpha=0.05)
+dev.off()
+
 #Alternative shrinkage estimators
 resNorm <- lfcShrink(dds, coef=2, type="normal")
 plotMA(resNorm, ylim=c(-1.5,1.5),main='Normal')
