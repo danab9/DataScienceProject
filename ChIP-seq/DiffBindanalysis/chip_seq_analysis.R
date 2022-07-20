@@ -1,9 +1,12 @@
-## differential enrichdment analysis
-## comparing normalized signal between AD and old for each peak 
-## method like in paper: Wilcoxon Rank sum test , two-sided, pval =0.05 
+## differential binding analysis
+## Since the diffBind R-package doesnt work due to missing qualitative bam files, we followed the methods of Naitivio et al. 
+## we are comparing the signal values between the groups for each peak/region 
+## those signals are already normalized by RPKM ( reads per kiolbase millions)
+## we used a Wilcoxon Rank sum test for the pairwise comparison and for validation ANOVA for multiple comparison 
 
+## the following script is repeated for each histone modificaiton data set
 
-
+## reading in 
 df <- read.table("~/Downloads/mat_H3K9ac.txt")
 AD_index <- c(22:30)
 old_index <- c(12:21)
@@ -13,7 +16,7 @@ colnames(df)[32] <- "distance.to.TSS"
 colnames(df)[34] <- "gene.name"
 colnames(df)[33] <- "region"
 
-
+# function for the wilcoxon test
 execute_wilcox_test <- function(df, name, index1,index2){
   name.pv <- paste(name, "pval", sep=".")
   name.fc <- paste(name, "log2FC", sep=".")
@@ -60,6 +63,7 @@ df <- execute_wilcox_test(df, "OY", young_index, old_index)
 
 
 
+
 ## plotting result
 
 
@@ -81,7 +85,7 @@ create_volcanoplot <- function(df, name){
 
 create_volcanoplot(df, "ADO")
 
-#2 distribution of log2FC 
+#2. distribution of log2FC 
 create_FC_dist <- function(df, name, type="density"){
   name.pval <- paste(name, "pval", sep=".")
   name.fc <- paste(name, "log2FC", sep=".")
@@ -103,7 +107,8 @@ create_FC_dist <- function(df, name, type="density"){
 
 create_FC_dist(df, "ADO", "hist") + xlim(-5,5) + ylab("")
 
-# distance to TSS of the signif. peaks
+
+#3.  Distance to TSS of the significant peaks
 
 create_barchart_TSS <- function(df, name){
   name.status <- paste(name, "status", sep=".")
@@ -135,8 +140,9 @@ create_barchart_TSS <- function(df, name){
 
 test<-create_barchart_TSS(df, "ADO")
 
-## ANOVA test
 
+## ANOVA test
+# to validate result of Wilcoxon test
 
 execute.ANOVA.test <- function(df, idx1,idx2,idx3){
   ## checking assumption of normality and equal sample variances
@@ -158,19 +164,19 @@ execute.ANOVA.test <- function(df, idx1,idx2,idx3){
     levene.res[i] <- leveneTest(count ~group, data=together)$Pr[1]
   }
   
-  adj.anova<- p.adjust(anova.res, method="BH")
-  
   results <- data.frame( anova.pval = anova.res, shapiro.pval = shapiro.res, levene.pval = levene.res )
   
   return(results)
 }
 
 
-### plotting to check normality 
+### plotting to check normality , alternative to the shapiro test
   #library(car)
   # qqplot<- qqPlot(res_aov$residuals, id = FALSE )
 
 anova.df <- execute.ANOVA.test(df, young_index, old_index, AD_index)
+
+# normality is not given for most cases! 
 failed.normality.test <- mean(anova.df$shapiro.pval < 0.05)
 failed.eq.sample.variance <- mean(anova.df$levene.pval < 0.05)
 
@@ -178,12 +184,12 @@ failed.eq.sample.variance <- mean(anova.df$levene.pval < 0.05)
 # intersection of anova and wilcoxon test
 df <- cbind(df, anova.pval=anova.df$anova.pval)
 
-signif.anova.peaks <- nrow(filter(df, anova.pval <0.05))
 disease.specific<- filter(df, ADO.pval <0.05 & anova.pval <0.05)
 age.regulated <- filter(df,OY.pval <0.05 & ADO.pval >= 0.05 & anova.pval <0.05 )
 age.dysregulated <- filter(df, (ADO.pval <0.05 | OY.pval <0.05) & anova.pval <0.05)
 
-##boxplot 
+##boxplot
+## have a look on the overall distirbution of the signals for the singi. peaks between the groups 
 create.boxplot <- function(data, name ){
   name.status <- paste(name, "status", sep=".")
   
@@ -234,8 +240,11 @@ create.boxplot(disease.specific, "ADO")
 
 write.csv(disease.specific, file= "~/disease_spec_enriched_peaks.csv", row.names = F)
 
+# Linking CHip-Seq with RNA-seq
+# comparing the peaks and their associated genes with the DEG genes of the RNA-seq 
+# making venn diagrams to see the intersections 
 
-library(ggvenn)# comparing it to DEG genes
+library(ggvenn)
 down.path <- "/home/rosa/DataScienceProject/RNA-seq/UpDownreg_genes/downregulationgenes.txt"
 up.path <- "/home/rosa/DataScienceProject/RNA-seq/UpDownreg_genes/upregulatedgenes.txt"
 save.path <- "~/intersection_H3K9ac.csv"
