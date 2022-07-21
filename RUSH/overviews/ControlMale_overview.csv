@@ -1,0 +1,16 @@
+ID,Accession,Biosample.accession,file_name,Assay.name,Assay.title,Biosample.term.name,Organism,Life.stage,Biosample.age,Biological.replicate,Technical.replicate
+/experiments/ENCSR826FNO/,ENCSR826FNO,ENCBS934BVK,ENCFF992KRW,RNA-seq,total RNA-seq,middle frontal area 46,Homo sapiens,adult,84 years,1,1
+/experiments/ENCSR863EIY/,ENCSR863EIY,ENCBS870MVU,ENCFF763RPV,RNA-seq,total RNA-seq,middle frontal area 46,Homo sapiens,adult,82 years,1,1
+/experiments/ENCSR394ZSF/,ENCSR394ZSF,ENCBS666KAY,ENCFF258ANV,RNA-seq,total RNA-seq,middle frontal area 46,Homo sapiens,adult,87 years,1,1
+/experiments/ENCSR394HJK/,ENCSR394HJK,ENCBS317HDH,ENCFF687GJE,RNA-seq,total RNA-seq,middle frontal area 46,Homo sapiens,adult,83 years,1,1
+/experiments/ENCSR447WLU/,ENCSR447WLU,ENCBS611ZGG,ENCFF354MPI,RNA-seq,total RNA-seq,middle frontal area 46,Homo sapiens,adult,78 years,1,1
+/experiments/ENCSR439PRN/,ENCSR439PRN,ENCBS137SYN,ENCFF823FJI,RNA-seq,total RNA-seq,middle frontal area 46,Homo sapiens,adult,83 years,1,1
+/experiments/ENCSR133PLR/,ENCSR133PLR,ENCBS634VGA,ENCFF808SYD,RNA-seq,total RNA-seq,middle frontal area 46,Homo sapiens,adult,85 years,1,1
+/experiments/ENCSR395DKP/,ENCSR395DKP,ENCBS709FQH,ENCFF589PEM,RNA-seq,total RNA-seq,middle frontal area 46,Homo sapiens,adult,87 years,1,1
+/experiments/ENCSR832YWU/,ENCSR832YWU,ENCBS506TDA,ENCFF201RLT,RNA-seq,total RNA-seq,middle frontal area 46,Homo sapiens,adult,87 years,1,1
+/experiments/ENCSR390MBR/,ENCSR390MBR,ENCBS395PUX,ENCFF693QKW,RNA-seq,total RNA-seq,middle frontal area 46,Homo sapiens,adult,83 years,1,1
+/experiments/ENCSR377MTB/,ENCSR377MTB,ENCBS077ZEW,ENCFF588RXF,RNA-seq,total RNA-seq,middle frontal area 46,Homo sapiens,adult,86 years,1,1
+/experiments/ENCSR052LON/,ENCSR052LON,ENCBS310NAE,ENCFF725USM,RNA-seq,total RNA-seq,middle frontal area 46,Homo sapiens,adult,71 years,1,1
+/experiments/ENCSR378WUC/,ENCSR378WUC,ENCBS577UDQ,ENCFF993SOA,RNA-seq,total RNA-seq,middle frontal area 46,Homo sapiens,adult,90 or above years,1,1
+/experiments/ENCSR882HXI/,ENCSR882HXI,ENCBS545PYF,ENCFF884HHH,RNA-seq,total RNA-seq,middle frontal area 46,Homo sapiens,adult,83 years,1,1
+/experiments/ENCSR012UFU/,ENCSR012UFU,ENCBS612UJI,ENCFF361FBY,RNA-seq,total RNA-seq,middle frontal area 46,Homo sapiens,adult,86 years,1,1

@@ -1,0 +1,7 @@
+"log2FoldChange","padj","genes","gene_type","hgnc_symbol","gene_biotype"
+-22.8083483524057,2.96438315742685e-06,"ENSG00000125695","downregulated","","protein_coding"
+6.79646121407626,0.000160171799511283,"ENSG00000134184","upregulated","GSTM1","protein_coding"
+-0.49024865360982,0.00888431427228674,"ENSG00000180881","downregulated","CAPS2","protein_coding"
+6.51097695183747,0.0134172496570225,"ENSG00000229807","upregulated","XIST","lncRNA"
+18.6782755980225,0.0015609925701686,"ENSG00000232245","upregulated","","lncRNA"
+19.2737147424992,0.000160171799511283,"ENSG00000279782","upregulated","PPIAL4F","protein_coding"
