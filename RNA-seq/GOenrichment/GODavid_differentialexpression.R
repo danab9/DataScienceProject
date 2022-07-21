@@ -83,3 +83,28 @@ dev.off()
 
 #heatmap.2(as.matrix(RNAnorm), scale = "none", col = bluered(200),key=FALSE,keysize=0.75, key.par = list(cex=0.3),
 #          trace = "none", density.info = "none", cexRow=0.9)
+
+paperGO <- read.table('go_genesPaper.txt')
+ownGO <- read.table('go_genes.txt')
+
+x <- list(paper=unlist(paperGO),own=unlist(ownGO))
+
+venn <- Venn(x)
+data <- process_data(venn)
+png(file = "GOenrichment.png", height = 400,width=600)
+ggplot() +
+  # 1. region count layer
+  geom_sf(aes(fill = count), data = venn_region(data),size=2) +
+  # 2. set edge layer
+  geom_sf(aes(color = name), data = venn_setedge(data), show.legend = TRUE, size = 2) +
+  # 3. set label layer
+  geom_sf_text(aes(label = name), data = venn_setlabel(data),size=5) +
+  # 4. region label layer
+  geom_sf_label(aes(label = paste0(count, " (", scales::percent(count/sum(count), accuracy = 2), ")")), 
+                data = venn_region(data),
+                size = 5) +
+  scale_fill_gradient(low = "grey80", high = "red")+
+  scale_color_manual(values = c("own" = "red","paper" ="grey70"))+
+  theme_void()
+dev.off()
+# Venn diagramm of results from genes within "regulation of transcription"
