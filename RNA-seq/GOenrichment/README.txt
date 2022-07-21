@@ -8,7 +8,7 @@ subfolder:
 R scripts: 
 
 - Enrichment_Visualization.Rmd shows how the GO and pathway enrichments were done as well as visualizing 
-- Inga sript: 
+- Inga sript: GODavid_differentialexpression.R shows visualization of GO term (David) "regulation of transcription" with different heatmaps (RT_heatmap.png, RT_heatmapNew.png)
 
 
 
