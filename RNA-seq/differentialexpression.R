@@ -1,5 +1,4 @@
 #RNA SEQ
-
 library(stringr)
 library(DESeq2)
 library(dplyr)
@@ -8,7 +7,6 @@ library(readxl)
 library(pheatmap)
 library(pals)
 library(PerformanceAnalytics)
-library(corrplot)
 source('differentialexpression_function.R')
 
 
@@ -18,7 +16,7 @@ colnames(rnaseqdata) <- paste0(data.frame(str_split(colnames(rnaseqdata),'[.]'))
 #rnaseq_ercc <- read.table("RNAseq/GSE153873_summary_count.ercc.txt", sep = "\t")
 dim(rnaseqdata)
 # 27135 different genes and 30 patients
-#rnaseqdata <- log2(rnaseqdata+1)
+
 
 # Groups
 AD <- dplyr::select(rnaseqdata, starts_with("AD"))
@@ -27,10 +25,6 @@ old <- dplyr::select(rnaseqdata, starts_with("Old"))
 
 # new order of patient
 rnaseqdata <- data.frame(AD,old,young)
-
-#correlation
-c <- cor(rnaseqdata)
-corrplot(c)
 
 
 # First task: Comparing gene expression between AD and old samples
@@ -48,16 +42,6 @@ resOrdered <- res[order(res$pvalue),]
 
 pvalues <- p.adjust(res$pvalue, method = "BY")
 sum(pvalues<0.05,na.rm = T)
-
-## VISUALIZAION
-# MA plot
-png(file = "MAplot.png", height = 600,width=600)
-plotMA(res, ylim=c(-3,3),colSig='red',colLine='red',alpha=0.05)
-dev.off()
-
-#Alternative shrinkage estimators
-resNorm <- lfcShrink(dds, coef=2, type="normal")
-plotMA(resNorm, ylim=c(-1.5,1.5),main='Normal')
 
 
 plotdf<- data_frame(log2FoldChange=res$log2FoldChange, padj= res$padj, Yekutielipval=pvalues,pval=res$pvalue, genes=rownames(res))
@@ -106,8 +90,24 @@ write.table(downregulated, 'downregulated_results.txt', quote = FALSE, append = 
 #three main genes from the paper
 imp <- c( 'EP300', 'CREBBP','TRRAP')
 
+
+
+################################################################################
+## VISUALIZAION
+
+
 # Plot counts for a single gene -> smallest pvalue
 plotCounts(dds, gene=which.min(res$padj), intgroup="condition")
+# MA plot
+png(file = "MAplot.png", height = 400,width=400)
+plotMA(res, ylim=c(-3,3),colSig='red',colLine='red',alpha=0.05,cex=0.4,xlab='Mean expression',ylab='log2 (AD/old)')
+dev.off()
+# description: MA plot of differential results (AD vs old)
+
+#Alternative shrinkage estimators
+resNorm <- lfcShrink(dds, coef=2, type="normal")
+plotMA(resNorm, ylim=c(-1.5,1.5),main='Normal')
+
 
 
 #Heatmap of the count matrix + cluster
@@ -130,7 +130,11 @@ heatmap.2(log2(1+ntd[which(rownames(ntd) %in% upregulated$genes[1:60]),]), scale
 vsd <- vst(dds, blind=FALSE)
 vsd$condition <- factor(c(rep("old",ncol(old)),rep("AD",ncol(AD))))
 levels(vsd$condition) <- c('old','AD')
+png(file = "PCARNAseq.png", height = 400,width=600)
 plotPCA(vsd, intgroup=c("condition"))
+dev.off()
+# description: PCA plot AD vs old 
+
 
 # other differential expression
 res <- diffexpression(young,AD,alpha=0.05,tidy=FALSE)
@@ -139,7 +143,7 @@ summary(res)
 res <- diffexpression(young,old,alpha=0.05,tidy=FALSE)
 summary(res)
 
-res <- diffexpression(young,old,AD,alpha=0.05,tidy=FALSE)
+res <- diffexpression(data.frame(young,old),AD,alpha=0.05,tidy=FALSE)
 summary(res)
 
 plotdf<- data_frame(log2FoldChange=res$log2FoldChange, padj= res$padj,pval=res$pvalue, genes=rownames(res))
@@ -151,14 +155,14 @@ print(table(plotdf$gene_type))
 
 #up and downregulated genes, ordered by p_adjust
 upregulatedAll <- plotdf[plotdf$gene_type=="upregulated",]
-upregulatedAll <- upregulated[order(upregulated$padj),]
+upregulatedAll <- upregulatedAll[order(upregulatedAll$padj),]
 downregulatedAll <- plotdf[plotdf$gene_type=="downregulated",]
-downregulatedAll <- downregulated[order(downregulated$padj),]
+downregulatedAll <- downregulatedAll[order(downregulatedAll$padj),]
 
 write.table(upregulatedAll, 'upregulatedAll.txt', quote=FALSE, append = FALSE, sep = " ", dec = ".",
             row.names = TRUE, col.names = TRUE)
 
 write.table(downregulatedAll, 'downregulatedAll.txt',quote = FALSE, append = FALSE, sep = " ", dec = ".",
-            row.names = FALSE, col.names = FALSE)
+            row.names = TRUE, col.names = TRUE)
 
 
