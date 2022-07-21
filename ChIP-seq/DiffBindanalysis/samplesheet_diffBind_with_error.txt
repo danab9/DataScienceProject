@@ -1,0 +1,12 @@
+Y_H3K9ac	bed_files/MIT.Y_H3K9ac_merged.bed	bams/MIT.Y_H3K9ac_merged.bed.bam	bed	YOUNG
+O_H3K9ac	bed_files/MIT.O_H3K9ac_merged.bed	bams/MIT.O_H3K9ac_merged.bed.bam	bed	OLD
+AD_H3K9ac	bed_files/MIT.AD_H3K9ac_merged.bed	bams/MIT.AD_H3K9ac_merged.bed.bam	bed	AD
+Y_H3K4me1	bed_files/MIT.Y_H3K4me1_merged.bed	bams/MIT.Y_H3K4me1_merged.bed.bam	bed	YOUNG
+O_H3K4me1	bed_files/MIT.O_H3K4me1_merged.bed	bams/MIT.O_H3K4me1_merged.bed.bam	bed	OLD
+AD_H3K4me1	bed_files/MIT.AD_H3K4me1_merged.bed	bams/MIT.AD_H3K4me1_merged.bed.bam	bed	AD
+Y_H3K27ac	bed_files/MIT.Y_H3K27ac_merged.bed	bams/MIT.Y_H3K27ac_merged.bed.bam	bed	YOUNG
+O_H3K27ac	bed_files/MIT.O_H3K27ac_merged.bed	bams/MIT.O_H3K27ac_merged.bed.bam	bed	OLD
+AD_H3K27ac	bed_files/MIT.AD_H3K27ac_merged.bed	bams/MIT.AD_H3K27ac_merged.bed.bam	bed	AD
+Y_H3K122ac	bed_files/MIT.Y_H3K122ac_merged.bed	bams/MIT.Y_H3K122ac_merged.bed.bam	bed	YOUNG
+O_H3K122ac	bed_files/MIT.O_H3K122ac_merged.bed	bams/MIT.O_H3K122ac_merged.bed.bam	bed	OLD
+AD_H3K122ac	bed_files/MIT.AD_H3K122ac_merged.bed	bams/MIT.AD_H3K122ac_merged.bed.bam	bed	AD
