@@ -1,5 +1,7 @@
 library(DESeq2)
 # http://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html
+# output either results of differential expression or DESeqDataSet
+# two or three groups are possible
 diffexpression <- function(group1,group2,group3=NA,alpha=0.05,tidy=TRUE,result=TRUE){
   if(all(is.na(group3))){
     condition <- factor(c(rep("G1",ncol(group1)),rep("G2",ncol(group2))))
