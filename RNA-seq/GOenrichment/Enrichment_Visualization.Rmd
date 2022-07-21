@@ -1,0 +1,178 @@
+---
+title: "GO Enrichment and Visualization"
+output:
+  html_notebook: default
+  pdf_document: default
+---
+
+After detection of differential expressed genes, the next step is to make a GO and pathway enrichment
+the enrichment is done using the subset of downregulated respecetively upregulated genes 
+we are using the R packages enrichplot to visualize and clusterprofiler for the actual enrichment analysis 
+
+# 1. Data import and wrangling
+
+reading in the up-/downregulated genes from RDS objects
+the genes are the result from the analysis done by Inga 
+```{r}
+upregulated <- readRDS("~/DataScienceProject/RNA-seq/GOenrichment/data/upregulated_genes")
+downregulated <- readRDS("~/DataScienceProject/RNA-seq/GOenrichment/data/downregulated_genes")
+```
+the input for GO enrichment is a list of fold changes from the corresponding dif. expressed genes
+```{r}
+upregulated_list <- 2^(upregulated$log2FoldChange) 
+names(upregulated_list)<- as.character(upregulated$genes)
+upregulated_list <- sort(upregulated_list, decreasing=TRUE)
+
+downregulated_list <- 2^(downregulated$log2FoldChange) 
+names(downregulated_list)<- as.character(downregulated$genes)
+downregulated_list <- sort(downregulated_list, decreasing=TRUE)
+
+```
+
+# 2. GO enrichment 
+using all three GO groups: biologcial process, cellular component and molecular function 
+p-value : 5% and data base is logically the human one 
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+library(enrichplot)
+library(DOSE)
+library(org.Hs.eg.db)
+library(clusterProfiler)
+library(ggplot2)
+```
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
+up_BPs <- gseGO( upregulated_list, 
+                 keyType = "SYMBOL",
+                 OrgDb = org.Hs.eg.db, 
+                 ont = "BP",
+                 pvalueCutoff = 0.05,
+                 nPermSimple = 10000 )
+```
+
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=TRUE}
+
+up_CCs <- gseGO( upregulated_list,
+                 keyType = "SYMBOL",
+                 OrgDb = org.Hs.eg.db, 
+                 ont = "CC",
+                 pvalueCutoff = 0.05,
+                 nPermSimple = 10000 )
+
+up_MFs <- gseGO( upregulated_list, 
+                 keyType = "SYMBOL",
+                 OrgDb = org.Hs.eg.db, 
+                 ont = "MF",
+                 pvalueCutoff = 0.05,
+                 nPermSimple = 10000 )
+
+
+
+
+down_BPs <- gseGO( downregulated_list, 
+                   keyType = "SYMBOL",
+                 OrgDb = org.Hs.eg.db, 
+                 ont = "BP",
+                 pvalueCutoff = 0.05,
+                 nPermSimple = 10000 )
+
+down_CCs <- gseGO( downregulated_list, 
+                   keyType = "SYMBOL",
+                 OrgDb = org.Hs.eg.db, 
+                 ont = "CC",
+                 pvalueCutoff = 0.05,
+                 nPermSimple = 10000 )
+
+down_MFs <- gseGO( downregulated_list, 
+                   keyType = "SYMBOL",
+                 OrgDb = org.Hs.eg.db, 
+                 ont = "MF",
+                 pvalueCutoff = 0.05,
+                 nPermSimple = 10000 )
+
+
+```
+
+# Visualization 
+now, we can visualize the enriched GOs with enrichplot 
+here, we did for the upregualted biological processes
+one can see that most of them are related to transcription and its regulation 
+they all have similar  distribution of their log2 fold changes
+```{r}
+# enriched GOS 
+dotplot(up_BPs, showCategory=10) + ggtitle("Biological Process upregulated GOs")
+
+#similiar to dotplot, but GOs are clustered 
+treeplot(pairwise_termsim(up_BPs), showCategory = 10, hclust_method = "average") + ggtitle( "upregulated Biological Process GO Terms")
+
+
+# distribution of log2 fold changes of enriched GOs
+ridgeplot(up_BPs, showCategory=10) 
+
+```
+
+# 3. KEGG pathway enrichment 
+the function, that execute a KEGG enrichment, needs entez ids of the genes 
+so the first step is a conversion from hgnc symbols to entrez ids
+the conversion is not 100% successful, since some symbols do not have an entrez ids
+```{r}
+convert_ID <- function(genelist){
+  ids<-bitr(genelist$genes, fromType = "ALIAS", toType = "ENTREZID", OrgDb= org.Hs.eg.db)
+  
+  # only one entrrez id per hgnc symbol 
+  dedup_ids = ids[!duplicated(ids[c("ALIAS")]),]
+  df = right_join(genelist, dedup_ids, by= c("genes" = "ALIAS"))
+  
+  # delete hgnc symbols that have the same entrez ids 
+  same.entrez.ids <- df[duplicated(df$ENTREZID),]$ENTREZID
+  df<- filter(df, !(ENTREZID %in% same.entrez.ids))
+
+  gene.list.ID <- (df$log2FoldChange)
+  # Name vector with ENTREZ ids
+  names(gene.list.ID) <- as.character(df$ENTREZID)
+  # sort the list in decreasing order (required for clusterProfiler)
+  gene.list.ID = sort(gene.list.ID, decreasing = TRUE)
+  return(gene.list.ID)
+}
+
+KEGG_upregulated_list <- convert_ID(upregulated)
+KEGG_downregulated_list <- convert_ID(downregulated)
+```
+
+now we can run the enrichment
+
+```{r, warning=FALSE}
+up_kk <- gseKEGG(geneList = KEGG_upregulated_list,
+               organism     = "hsa",
+               nPermSimple   = 10000,
+               minGSSize    = 1,
+               maxGSSize    = 800,
+               pvalueCutoff = 0.05,
+               #pAdjustMethod = "BH",
+               keyType       = "ncbi-geneid")
+```
+unfortunately there was only one pathway enriched, that has nothing to do with AD 
+```{r}
+dotplot(up_kk, showCategory = 10, title = "Enriched Pathways" , split=".sign") + facet_grid(.~.sign)
+
+```
+# 4. Reactome Pathway Enrichment
+
+Since the KEGG enrichment was not successful, we now using the pathways annotated by the Reactome pathway 
+The online DAVID enrichment already discovered already the pathway "The citric acid (TCA) cycle and respiratory electron transport" 
+The malfunction of TCA and energy production in the mitochondria is well documented in AD, that's why we choose this one to visualize. 
+
+
+```{r, message=FALSE, warning=FALSE}
+library(ReactomePA)
+down.pathways <- enrichPathway(names(KEGG_downregulated_list), organism = "human", pvalueCutoff=0.05, pAdjustMethod = "BH")
+up.pathways <-  enrichPathway(names(KEGG_upregulated_list), organism = "human", pvalueCutoff=0.05, pAdjustMethod = "BH")
+
+# downregulated genes are colored
+viewPathway("The citric acid (TCA) cycle and respiratory electron transport", foldChange = KEGG_downregulated_list, readable = TRUE)
+    
+# transcription related pathways are upregulated as well as neuronal specific signal pathways           
+dotplot(up.pathways, showCategory = 20, title = "Upregulated Pathways")
+```

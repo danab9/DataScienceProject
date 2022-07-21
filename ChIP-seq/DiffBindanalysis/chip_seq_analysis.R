@@ -1,13 +1,13 @@
 ## differential binding analysis
-## Since the diffBind R-package doesnt work due to missing qualitative bam files, we followed the methods of Naitivio et al. 
+## Since the diffBind R-package didnt work due to missing qualitative bam files, we followed the methods of Nativio et al. 
 ## we are comparing the signal values between the groups for each peak/region 
-## those signals are already normalized by RPKM ( reads per kiolbase millions)
-## we used a Wilcoxon Rank sum test for the pairwise comparison and for validation ANOVA for multiple comparison 
+## those signals are already normalized by RPKM ( reads per kilobase millions)
+## we used a Wilcoxon Rank sum test for the pairwise comparison and for a further validation ANOVA for multiple comparison 
 
 ## the following script is repeated for each histone modificaiton data set
 
 ## reading in 
-df <- read.table("~/Downloads/mat_H3K9ac.txt")
+df <- read.table("~/DataScienceProject/data/mat_H3K9ac.txt")
 AD_index <- c(22:30)
 old_index <- c(12:21)
 young_index <- c(4:11)
@@ -16,7 +16,8 @@ colnames(df)[32] <- "distance.to.TSS"
 colnames(df)[34] <- "gene.name"
 colnames(df)[33] <- "region"
 
-# function for the wilcoxon test
+# function for the wilcoxon test 
+# no p-value adjustment ! 
 execute_wilcox_test <- function(df, name, index1,index2){
   name.pv <- paste(name, "pval", sep=".")
   name.fc <- paste(name, "log2FC", sep=".")
@@ -64,10 +65,11 @@ df <- execute_wilcox_test(df, "OY", young_index, old_index)
 
 
 
-## plotting result
+## plotting results
 
 
-# 1. volcano plot 
+# 1. volcano plot , visualizing the distribution of the log2FC vs p-values, 
+# for H3K27ac and H3K9ac more gains than losses, H3K122ac the other way around
 create_volcanoplot <- function(df, name){
   name.pval <- paste(name, "pval", sep=".")
   name.fc <- paste(name, "log2FC", sep=".")
@@ -85,7 +87,8 @@ create_volcanoplot <- function(df, name){
 
 create_volcanoplot(df, "ADO")
 
-#2. distribution of log2FC 
+#2. distribution of log2FC divided into not significant regions and significant ones
+# to have better look on log2 FC wothout p-vals, non significant ones are quite normally distributed
 create_FC_dist <- function(df, name, type="density"){
   name.pval <- paste(name, "pval", sep=".")
   name.fc <- paste(name, "log2FC", sep=".")
@@ -108,7 +111,8 @@ create_FC_dist <- function(df, name, type="density"){
 create_FC_dist(df, "ADO", "hist") + xlim(-5,5) + ylab("")
 
 
-#3.  Distance to TSS of the significant peaks
+#3. Distribution of significant peaks according to their distances to the next TSS (Transcription Starting Site)
+# most of the peaks are either very close to the TSS or far away, ths result differs from Nativio et al outcome
 
 create_barchart_TSS <- function(df, name){
   name.status <- paste(name, "status", sep=".")
@@ -138,7 +142,7 @@ create_barchart_TSS <- function(df, name){
   
 }
 
-test<-create_barchart_TSS(df, "ADO")
+create_barchart_TSS(df, "ADO")
 
 
 ## ANOVA test
@@ -189,7 +193,8 @@ age.regulated <- filter(df,OY.pval <0.05 & ADO.pval >= 0.05 & anova.pval <0.05 )
 age.dysregulated <- filter(df, (ADO.pval <0.05 | OY.pval <0.05) & anova.pval <0.05)
 
 ##boxplot
-## have a look on the overall distirbution of the signals for the singi. peaks between the groups 
+## have a look on the overall distribution of the signals for the significant peaks between the groups 
+# as expected, AD has a lower median for losses and a higher median for gains compared to the old and young group 
 create.boxplot <- function(data, name ){
   name.status <- paste(name, "status", sep=".")
   
@@ -237,19 +242,26 @@ create.boxplot <- function(data, name ){
 
 create.boxplot(disease.specific, "ADO")
 
+# saving all disease specific differentially binded regions, all three files are saved in the folder results
+write.csv(disease.specific, file= "~/H3K9ac_disease_spec_enriched_peaks.csv", row.names = F)
 
-write.csv(disease.specific, file= "~/disease_spec_enriched_peaks.csv", row.names = F)
 
-# Linking CHip-Seq with RNA-seq
+
+#  CHip-Seq and RNA-seq
+
 # comparing the peaks and their associated genes with the DEG genes of the RNA-seq 
 # making venn diagrams to see the intersections 
 
+# reading in the significant DEG
 library(ggvenn)
-down.path <- "/home/rosa/DataScienceProject/RNA-seq/UpDownreg_genes/downregulationgenes.txt"
-up.path <- "/home/rosa/DataScienceProject/RNA-seq/UpDownreg_genes/upregulatedgenes.txt"
+down.path <- "~/DataScienceProject/RNA-seq/UpDownreg_genes/downregulationgenes.txt"
+up.path <- "~/DataScienceProject/RNA-seq/UpDownreg_genes/upregulatedgenes.txt"
 save.path <- "~/intersection_H3K9ac.csv"
 
-
+# creating intersections, venn diagrams and saving everything in a table
+# we expect intersections between up DEGs and gains, since the histone acetylation are enhancing transcription 
+# and we expect intersections between down DEGs and losses, since with lossing acetylation the trnascription is not activated. 
+# however, we oberserved also other intersections, which makes biologically not a lot of sense, and in genereal a rather smaller overlap between the two omic data sets. 
 comapre_chip_rnaseq  <- function(data, up.path, down.path, save.path){
   
   down_DEG <- read.table(down.path)

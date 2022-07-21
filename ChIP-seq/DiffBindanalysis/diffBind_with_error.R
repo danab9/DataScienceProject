@@ -26,10 +26,11 @@ H3K9ac_norm <- dba.normalize(H3K9ac_count)
 
 #calculate contrast so DiffBind knows how to model data
 H3K9ac_contrast <- dba.contrast(H3K9ac_norm, reorderMeta = list(Factor="AD"), minMembers=1)
-#not working! more froups are required/ with more replicates!
+#not working! more groups are required/ with more replicates!
 
 
 #perform differential analysis - DID NOT WORK - tried out different ideas on how to solve but did not get it running -> performed own diffBind analysis
+# error from DESeq2, which is called within dba.analyze, saying that their only zero counts for every gene. possible reason might be the bam files, that are recovered from the bed files and thus lost a lot of information
 H3K9ac_analyzed <- dba.analyze(H3K9ac_norm)
 
 
