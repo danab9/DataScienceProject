@@ -1,13 +1,18 @@
-## differential binding analysis
-## Since the diffBind R-package didnt work due to missing qualitative bam files, we followed the methods of Nativio et al. 
-## we are comparing the signal values between the groups for each peak/region 
-## those signals are already normalized by RPKM ( reads per kilobase millions)
-## we used a Wilcoxon Rank sum test for the pairwise comparison and for a further validation ANOVA for multiple comparison 
+---
+title: "Differential Binding Analysis"
+output: html_notebook
+---
+- Since the diffBind R-package didnt work due to missing qualitative bam files, we followed the methods of Nativio et al. 
+- We are comparing the signal values between the groups for each peak/region.
+- Those signals are already normalized by RPKM (reads per kilobase millions)
+- We used a Wilcoxon Rank sum test for the pairwise comparison and for a further validation ANOVA for multiple comparison.
+- The following script is repeated for each histone modificaiton data set, explainatory we are using the data from the H3K9ac modification
 
-## the following script is repeated for each histone modificaiton data set
-
-## reading in 
-df <- read.table("~/DataScienceProject/data/mat_H3K9ac.txt")
+# Data import
+In all next steps, all the info is going to be stored in the dataframe "df"
+```{r}
+ 
+df <- read.table("~/DataScienceProject/ChIP-seq/DiffBindanalysis/DiffBind_matrices/DiffBind_mat_H3K9ac.txt")
 AD_index <- c(22:30)
 old_index <- c(12:21)
 young_index <- c(4:11)
@@ -16,8 +21,14 @@ colnames(df)[32] <- "distance.to.TSS"
 colnames(df)[34] <- "gene.name"
 colnames(df)[33] <- "region"
 
-# function for the wilcoxon test 
-# no p-value adjustment ! 
+```
+
+# Wilcoxon rank sum test 
+- we followed the instruction of Nativio et al., which did not included any p-value adjustment 
+- we did a p-value adjustment. However,this leads to 0 significant peaks. So we continued with the not corrected p-values. 
+- we tested AD vs old and old vs young
+```{r,  warning=FALSE}
+
 execute_wilcox_test <- function(df, name, index1,index2){
   name.pv <- paste(name, "pval", sep=".")
   name.fc <- paste(name, "log2FC", sep=".")
@@ -33,6 +44,7 @@ execute_wilcox_test <- function(df, name, index1,index2){
     foldchanges[i] <- log2FC
     
   }
+  
   df[, name.pv] <- pvals
   df[, name.fc ]<- foldchanges
   
@@ -54,7 +66,11 @@ execute_wilcox_test <- function(df, name, index1,index2){
     print(table(df$OY.status))
     
   }
- 
+  
+  ## p-value adjustment , using Benjamini-Hochberg correction
+  adj.pval <- p.adjust(pvals, "BH")
+  print(mean(adj.pval < 0.05))
+
   return(df)
 }
 
@@ -64,12 +80,12 @@ df <- execute_wilcox_test(df, "OY", young_index, old_index)
 
 
 
-
-## plotting results
-
-
-# 1. volcano plot , visualizing the distribution of the log2FC vs p-values, 
-# for H3K27ac and H3K9ac more gains than losses, H3K122ac the other way around
+```
+# Visualization
+1. Volcano plot 
+  -  visualizing the distribution of the log2FC vs p-values, 
+  - for H3K27ac and H3K9ac more gains than losses, H3K122ac the other way around
+```{r}
 create_volcanoplot <- function(df, name){
   name.pval <- paste(name, "pval", sep=".")
   name.fc <- paste(name, "log2FC", sep=".")
@@ -87,8 +103,12 @@ create_volcanoplot <- function(df, name){
 
 create_volcanoplot(df, "ADO")
 
-#2. distribution of log2FC divided into not significant regions and significant ones
-# to have better look on log2 FC wothout p-vals, non significant ones are quite normally distributed
+```
+2. Log2 FC distribution 
+  - divided into not significant regions and significant ones
+  - to have better look on log2 FC without p-vals, non significant ones are roughly normally distributed
+
+```{r}
 create_FC_dist <- function(df, name, type="density"){
   name.pval <- paste(name, "pval", sep=".")
   name.fc <- paste(name, "log2FC", sep=".")
@@ -108,12 +128,16 @@ create_FC_dist <- function(df, name, type="density"){
   
 }
 
-create_FC_dist(df, "ADO", "hist") + xlim(-5,5) + ylab("")
+create_FC_dist(df, "ADO", "hist") + xlim(-3,3) + ylab("")
+create_FC_dist(df, "ADO") + xlim(-3,3) + ylab("")
 
+```
+3. TSS distribution
 
-#3. Distribution of significant peaks according to their distances to the next TSS (Transcription Starting Site)
-# most of the peaks are either very close to the TSS or far away, ths result differs from Nativio et al outcome
+  - Distribution of significant peaks according to their distances to the next TSS (Transcription Starting Site)
+  - most of the peaks are either very close to the TSS or far away, ths result differs from Nativio et al outcome
 
+```{r}
 create_barchart_TSS <- function(df, name){
   name.status <- paste(name, "status", sep=".")
   data <-df[, c(name.status, "distance.to.TSS")]
@@ -145,12 +169,18 @@ create_barchart_TSS <- function(df, name){
 create_barchart_TSS(df, "ADO")
 
 
-## ANOVA test
-# to validate result of Wilcoxon test
-
+```
+# ANOVA 
+- to validate result of Wilcoxon rank sum  test
+- ANOVA assumes normality and equal sample variances
+- we are checking both assumption with shapiro test and levene test 
+- for a big number of  peaks, the shapiro gets rejected, p-value < 0.05 
+- that's why the result of the ANOVA test should not be taken to "serious" 
+- but that's the way Nativio et al. did their analysis. 
+```{r, warning=FALSE, message=FALSE}
+library(car)
 execute.ANOVA.test <- function(df, idx1,idx2,idx3){
-  ## checking assumption of normality and equal sample variances
-  
+
   shapiro.res<- c()
   levene.res<- c()
   anova.res <- c()
@@ -173,28 +203,34 @@ execute.ANOVA.test <- function(df, idx1,idx2,idx3){
   return(results)
 }
 
-
-### plotting to check normality , alternative to the shapiro test
-  #library(car)
-  # qqplot<- qqPlot(res_aov$residuals, id = FALSE )
-
 anova.df <- execute.ANOVA.test(df, young_index, old_index, AD_index)
 
-# normality is not given for most cases! 
-failed.normality.test <- mean(anova.df$shapiro.pval < 0.05)
-failed.eq.sample.variance <- mean(anova.df$levene.pval < 0.05)
+# normality is not given for almost 30% of all cases! 
+mean(anova.df$shapiro.pval < 0.05)
 
+# equal sample variances across samples can be assumed 
+mean(anova.df$levene.pval < 0.05)
 
-# intersection of anova and wilcoxon test
+```
+
+- intersection of anova and wilcoxon tests
+- only keeping peaks that are signifcant in both tests
+- the disease specific significant regions are saved in the folder "disease_spec_enriched_peaks"
+```{r}
 df <- cbind(df, anova.pval=anova.df$anova.pval)
 
 disease.specific<- filter(df, ADO.pval <0.05 & anova.pval <0.05)
 age.regulated <- filter(df,OY.pval <0.05 & ADO.pval >= 0.05 & anova.pval <0.05 )
 age.dysregulated <- filter(df, (ADO.pval <0.05 | OY.pval <0.05) & anova.pval <0.05)
 
-##boxplot
-## have a look on the overall distribution of the signals for the significant peaks between the groups 
-# as expected, AD has a lower median for losses and a higher median for gains compared to the old and young group 
+#write.csv(disease.specific, file= "~/H3K9ac_disease_spec_enriched_peaks.csv", row.names = F)
+nrow(disease.specific)
+```
+# boxplot
+- have a look on the overall distribution of the signals for the significant peaks between the groups 
+- as expected, AD has a lower median for losses and a higher median for gains compared to the old and young group 
+
+```{r}
 create.boxplot <- function(data, name ){
   name.status <- paste(name, "status", sep=".")
   
@@ -242,26 +278,28 @@ create.boxplot <- function(data, name ){
 
 create.boxplot(disease.specific, "ADO")
 
-# saving all disease specific differentially binded regions, all three files are saved in the folder results
-write.csv(disease.specific, file= "~/H3K9ac_disease_spec_enriched_peaks.csv", row.names = F)
+```
 
+# CHip-Seq and RNA-seq
 
+- lastly, we compare the peaks and their associated genes with the DEG genes of the RNA-seq 
+- we visualize the overlaps with the help of  venn diagrams
 
-#  CHip-Seq and RNA-seq
+- first step: reading in the significant DEG and determine the path to save the result
 
-# comparing the peaks and their associated genes with the DEG genes of the RNA-seq 
-# making venn diagrams to see the intersections 
-
-# reading in the significant DEG
+```{r, message=FALSE}
 library(ggvenn)
 down.path <- "~/DataScienceProject/RNA-seq/UpDownreg_genes/downregulationgenes.txt"
 up.path <- "~/DataScienceProject/RNA-seq/UpDownreg_genes/upregulatedgenes.txt"
 save.path <- "~/intersection_H3K9ac.csv"
+```
+- creating intersections, venn diagrams and saving everything in a table
+- we expect intersections between up DEGs and gains, since the histone acetylation are enhancing transcription 
+- we expect intersections between down DEGs and losses, since with lossing acetylation the transcription is not activated. 
+- however, we oberserved also other intersections, which makes biologically ( at first glance ) not a lot of sense, 
+- furthermore, a rather smaller overlap between the two omic data sets can be observed.
 
-# creating intersections, venn diagrams and saving everything in a table
-# we expect intersections between up DEGs and gains, since the histone acetylation are enhancing transcription 
-# and we expect intersections between down DEGs and losses, since with lossing acetylation the trnascription is not activated. 
-# however, we oberserved also other intersections, which makes biologically not a lot of sense, and in genereal a rather smaller overlap between the two omic data sets. 
+```{r}
 comapre_chip_rnaseq  <- function(data, up.path, down.path, save.path){
   
   down_DEG <- read.table(down.path)
@@ -288,7 +326,7 @@ comapre_chip_rnaseq  <- function(data, up.path, down.path, save.path){
                                 
   )
   
-  write.csv(intersection.df, file=save.path, row.names = F)
+  #write.csv(intersection.df, file=save.path, row.names = F)
   
 
   plot<- ggvenn(list(downDEG=down_DEG$V1 , upDEG=up_DEG$V1 ,loss=loss.gene.names,gain=gain.gene.names  ))
@@ -297,7 +335,5 @@ comapre_chip_rnaseq  <- function(data, up.path, down.path, save.path){
 }
 
 comapre_chip_rnaseq(disease.specific, up.path, down.path , save.path)
-
-
-
+```
 

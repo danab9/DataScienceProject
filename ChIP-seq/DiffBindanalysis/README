@@ -1,0 +1,13 @@
+ChIP-seq Differential Binding Analysis (DBA)
+
+R-scripts: 
+- bindanalysis_matrixfiltering.R: create filtered matrix for the DBA
+- diffBind_with_error.R : attempt to use the R-package diffBind to exeute a DBA 
+- chip_seq_analysis.RMd: following the DBA done by Nativio et al. based on the signal values for the peaks 
+- bindanalysis_H3K9ac.sh: ? 
+
+folders: 
+- DiffBind_matrices contains matrices for the analyss of chip_seq_analysis.RMd
+- diffBind_results: plots produced by the notebook 
+- disease_spec_enriched_peaks and disease_specific_gains: storing all significant peaks of theanalysis
+
