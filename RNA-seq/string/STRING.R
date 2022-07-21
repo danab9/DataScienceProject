@@ -1,25 +1,30 @@
 #STRING ANALYSIS
+
 library(stringr)
 library(ggplot2)
 
-rnaseqdata <- read.table("RNAseq/normalizedRNA.txt")
+rnaseqdata <- read.table("normalizedRNA.txt")
 
 # import genes from GO enrichment "Regulation of transcription"
 ownres <- unlist(read.table( 'go_genes.txt'))
+# not visualized in cytoscape -> delete
 ownres <- ownres[!ownres%in%c('LINC-PINT','SGF29','TFDP2','ZNF137P')]
 
-
-# genexpression for color
+# For the visualization on cytoscape
+# color intensity in cytoscape: gene expression changes AD vs old
 upregulated <- read.table("upregulated.txt",header=TRUE)
 stringup <- upregulated[upregulated$genes%in%ownres,]              
 stringup <- stringup[order(stringup$genes),]
 round(stringup$log2FoldChange*100)
 
-#expression Values for node size
+# nodesize in cytoscape: mean gene expression in AD
 AD <-  dplyr::select(rnaseqdata, starts_with("AD"))
 stringADnorm <- AD[order(rownames(AD)),]
 rowMeans(stringADnorm)*10
 
+
+# Barplot of genes with a lot of interactions with other genes
+# string results (was also used for cytoscape)
 edges <- read.csv("STRING_network_default_edge.csv", header=TRUE, stringsAsFactors=FALSE)
 names <- unlist(strsplit(edges$name,"[ (pp) ]"))
 names <- matrix(names[names!=""],ncol=2,byrow=TRUE)
@@ -38,3 +43,5 @@ p + labs(title="",
         axis.title=element_text(size=13),
         axis.text.x = element_text(angle = 45, vjust = 0.7, hjust=0.3,size=12))
 dev.off()
+# description: Barplot of the top 13 genes with the most interactions. 
+# x-axis: 13 genes with the most interactions sorted, y-axis: # of interactions

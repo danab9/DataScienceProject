@@ -1,41 +1,54 @@
 library(stringr)
 library(DESeq2)
 library(EDASeq)
-library('org.Hs.eg.db')
+library(biomaRt)
+library(org.Hs.eg.db)
+library(corrplot)
 
-# data
+# read RNA data
 rnaseqdata <- read.table("RNAseq/GSE153873_summary_count.star.txt", sep = "\t",header = TRUE,row.names = 1)
 colnames(rnaseqdata) <- paste0(data.frame(str_split(colnames(rnaseqdata),'[.]'))[3,],data.frame(str_split(colnames(rnaseqdata),'[.]'))[1,])
 
-# get entrez id
-ensembl <- mapIds(org.Hs.eg.db, rownames(rnaseqdata), 'ENSEMBL', 'SYMBOL')
-ensemblnew <- ensembl[!is.na(ensembl)]
-genelength <- getGeneLengthAndGCContent(id=ensemblnew,'hsa')
+# get ensembl id -> ID conversion from hgnc symbols to ensembl ID
+mart <- useMart(dataset="hsapiens_gene_ensembl","ensembl")
+ensemblnew <- getBM(filters= "hgnc_symbol", 
+                    attributes=c( 'ensembl_gene_id','hgnc_symbol'),
+                    values= rownames(rnaseqdata),
+                    mart= mart)
+# not every hgnc symbol had an ensembl ID
+ensemblnew <- ensemblnew[!is.na(ensemblnew$ensembl_gene_id),]
+
+# get gene length
+genelength <- getGeneLengthAndGCContent(id=ensemblnew$ensembl_gene_id,'hsa')
 
 # DESeqData
 condition <- factor(colnames(rnaseqdata))
-deseqrna <- DESeqDataSetFromMatrix(rnaseqdata[which(!is.na(ensembl)),], DataFrame(condition), ~ condition)
+deseqrna <- DESeqDataSetFromMatrix(rnaseqdata[which(!is.na(ensemblnew$ensembl_gene_id)),], DataFrame(condition), ~ condition)
 mcols(deseqrna)$basepairs <- genelength[,1]
 
 # Counts normalized per kilobase
-normalizedRNAseq <- log2(fpkm(deseqrna, robust = TRUE)+1)
+normalizedRNA <- log2(fpkm(deseqrna, robust = TRUE)+1)
 
-#save normalized RNA in a table
-write.table(normalizedRNAseq, 'RNAseq/normalizedRNA.txt', quote=FALSE, append = FALSE, sep = " ", dec = ".",
+# save the normalized RNA
+write.table(normalizedRNA, 'normalizedRNA.txt', quote=FALSE, append = FALSE, sep = " ", dec = ".",
             row.names = TRUE, col.names = TRUE)
 
 ##EXTRA plots for visualization
 ## bp of non-normalized
-boxplot(log2(deseqrna+1), notch=TRUE,
+
+boxplot(log2(assay(deseqrna)+1), notch=TRUE,
         main = "Non-normalized read counts",
-        ylab="log2(read counts)", cex = .6)
+        ylab="log2(read counts+1)", cex = .6)
+# description: For each patient the non-normalized read counts. The median is around 6.
 ## bp of normalized values
-boxplot(log2(normalizedRNAseq +1), notch=TRUE,
+boxplot(normalizedRNA, notch=TRUE,
         main = "Normalized read counts per kb",
-        ylab="log2(read counts)", cex = .6)
+        ylab="normalized read counts", cex = .6)
+
+# description: For each patient the normalized read counts. The median is around 2. 
 
 library(ggplot2)
-
+# boxplot function with wilcox test
 boxplotfunction <- function(ndata,n=2){
   AD <- rowMeans(dplyr::select(ndata, starts_with("AD")))
   old <- rowMeans(dplyr::select(ndata, starts_with("Old")))
@@ -65,21 +78,22 @@ boxplotfunction <- function(ndata,n=2){
   
 }
 
-normalizedRNA <- read.table("normalizedRNA_new.txt",header=TRUE,sep = ",",row.names = 1)
-upregulatedAll <- read.table("upregulatedAll.txt",header=TRUE,row.names = 1)
-downregulatedAll <- read.table("downregulatedAll.txt",header=TRUE,row.names = 1)
+normalizedRNA <- read.table("normalizedRNA.txt",header=TRUE,sep = ",",row.names = 1)
+#upregulatedAll <- read.table("upregulatedAll.txt",header=TRUE,row.names = 1)
+#downregulatedAll <- read.table("downregulatedAll.txt",header=TRUE,row.names = 1)
 upregulated <- read.table("upregulated.txt",header=TRUE,row.names = 1)
 downregulated <- read.table("downregulated.txt",header=TRUE,row.names = 1)
 
 
-new <- normalizedRNA[upregulatedAll$genes,]
-new <- new[!is.na(new),]
-boxplotfunction(new,n=3)
+# new <- normalizedRNA[upregulatedAll$genes,]
+# new <- new[!is.na(new),]
+# boxplotfunction(new,n=3)
+# 
+# new <- normalizedRNA[downregulatedAll$genes,]
+# new <- new[!is.na(new),]
+# boxplotfunction(new,n=3)
 
-new <- normalizedRNA[downregulatedAll$genes,]
-new <- new[!is.na(new),]
-boxplotfunction(new,n=3)
-# old vs AD
+#Boxplot of normalized read counts from upregulated/downregulated genes: old vs AD
 new <- normalizedRNA[upregulated$genes,]
 new <- new[!is.na(new),]
 boxplotfunction(new,n=2)
@@ -88,3 +102,5 @@ new <- normalizedRNA[downregulated$genes,]
 new <- new[!is.na(new),]
 boxplotfunction(new,n=2)
 
+# description: Boxplot of up/downregulated genes in old and AD group
+# in addition a wilcox-test was calculated
