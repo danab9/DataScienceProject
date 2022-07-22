@@ -12,6 +12,7 @@ DiffBindanalysis: differential binding analysis - see own README file
 
 ML_matrix_creation: creation of iClusterBayes input matrix
 - patient_merge.sh: bash script for creating the big unfiltered matrix for the ML technique
+[- created big matrix can be found zip compressed in the DropBox]
 - iCluster_matrix_creation.R: R script for filtering matrix for ML approach
 - bedfiles_analysis_iCluster_tryout: for analysis of matrix - testing around
 - iCluster_mat_input.txt: final input matrix for iClusterBayes
