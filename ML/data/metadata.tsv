@@ -1,0 +1,32 @@
+Sample ID	Study Group	Gender	Age at death	PMI (hr)	Braak	Cerad	RIN (RNA)	neuron (%)	Cause of Death
+1	Young	Male	58	24	0	0	NA	17.8	sepsis/myocardial infarction following bone marrow transplant
+2	Young	Male	42	16	0	0	8.8	21.8	liver failure
+3	Young	Male	60	18	0	0	7.8	33.3	complications following surgery for esophageal cancer/COPD/sepsis
+4	Young	Male	57	14	0	0	8.3	35.8	kidney and liver failure following surgery for aortic aneurism
+5	Young	Male	42	16	0	0	7.2	47.1	liver failure
+6	Young	Male	59	17	0	0	8.4	26.2	complications following surgery for gall bladder removal
+7	Young	Male	55	11.5	0	0	8.6	41.3	sepsis/ history of diabetes and cardiac disease
+8	Young	Male	52	12	0	0	8.1	23.3	complications following surgery for aortic aneurism
+9	Young	Female	46	12	0	0	7.3	28.0	liver failure
+10	Old	Male	73	17	I/II	0	8.4	22.9	cancer/pulmonary thrombosis
+11	Old	Male	63	8.5	0	0	7	24.7	leukemia/pneumonia
+12	Old	Male	62	16	0	0	7.9	24.9	gastric adenocarcinoma
+13	Old	Male	68	21	I/II	0	6.7	23.9	septic shock/pneumonia
+14	Old	Male	70	8	I/II	0	5.6	20.6	coronary artery disease/COPD/ died of bypass surgery complications
+15	Old	Male	77	4	I/II	0	6.3	8.6	cardiac arrest
+16	Old	Male	61	6	0	0	8	29.8	liver cancer
+17	Old	Male	68	14	0	0	8.2	24.1	cancer of stomach and esophagus
+18	Old	Male	72	17	0	0	7.1	14.1	heart failure
+19	Old	Female	68	15	I/II	0	6.5	16.4	septic shock 
+20	AD	Male	64	16.5	V/VI	C	7.8	14.0	complications from AD
+21	AD	Male	63	16	V/VI	C	7	15.6	complications from AD
+22	AD	Male	71	5	V/VI	C	7.7	32.6	complications from AD
+23	AD	Male	74	18	V/VI	C	6.3	23.8	complications from AD
+24	AD	Male	78	11	V/VI	C	5.4	9.9	complications from AD
+25	AD	Male	61	21	V/VI	C	5.3	25.7	complications from AD
+26	AD	Male	65	17	V/VI	C	6.9	24.9	complications from AD
+27	AD	Female	70	19	V/VI	C	4.3	13.7	complications from AD
+28	AD	Male	79	12	V/VI	C	6.9	10.3	complications from AD
+29	AD	Male	64	16	V/VI	C	6.2	12.4	complications from AD
+30	AD	Male	64	5	V/VI	C	7.7	14.7	complications from AD
+31	AD	Male	67	10	V/VI	C	6.4	22.4	complications from AD
