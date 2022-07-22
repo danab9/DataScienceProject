@@ -5,5 +5,5 @@ The following scripts are included:
 2. `preML.R` - for preperation of ChIP-seq data and RNA-seq together.
 3. `ML.R` - Application of iClusterBayes (including choice of K) and DIABLO algorithms.
 
-The scripts should be ran by the same order. 
+The scripts should be ran by the same order. \
 Results are save to the `results` and `plots` folders.
