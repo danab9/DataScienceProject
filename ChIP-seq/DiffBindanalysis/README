@@ -3,10 +3,11 @@ ChIP-seq Differential Binding Analysis (DBA)
 R-scripts: 
 - bindanalysis_matrixfiltering.R: create filtered matrix for the DBA
 - diffBind_with_error.R : attempt to use the R-package diffBind to exeute a DBA 
+- samplesheet_diffBind_with_error: required for the diffBind_with_error.R script
 - chip_seq_analysis.RMd: following the DBA done by Nativio et al. based on the signal values for the peaks 
-- bindanalysis_H3K9ac.sh: ? 
+- bindanalysis_H3K9ac.sh: shell/bash script - required for transforming bed files for creating matrices using unionbedg (matrices required for diffbindanalysis)
 
 folders: 
-- DiffBind_matrices contains matrices for the analyss of chip_seq_analysis.RMd
-- plots: plots produced by the notebook 
-- results: disease specific enrichedpeaks and disease specific gains for every histone modification as well as their intersection with the RNA-seq DEGs
+- DiffBind_matrices contains matrices for the analysis of chip_seq_analysis.RMd
+- plots: plots produced by the notebook, such as Genomic Element distributions, Volcanoplots, ...
+- results: disease specific enriched peaks and disease specific gains for every histone modification as well as their intersection with the RNA-seq DEGs
