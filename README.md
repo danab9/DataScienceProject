@@ -4,19 +4,19 @@ This is the official GitHub webpage of group 6 from the course Data Science in t
 
 This project has the title: Multi Omics analysis of Alzheimer’s disease - focusing on epigenetic alterations and gene expression
 The individual analyses are located in the individual folders:
-  - ChIP-seq:  
+ - ChIP-seq:  
         - DiffBindanalysis
         - ML_matrix_creation
         - additional_analysis 
         
-  - RNA-seq:
+ - RNA-seq:
         - Differential_expression
         - GOenrichment
         - lmFit
         - normalized RNA
         - string
         
-  - RUSH:
+ - RUSH:
         - data
         - overviews
         - plots
