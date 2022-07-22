@@ -8,6 +8,5 @@ R-scripts:
 
 folders: 
 - DiffBind_matrices contains matrices for the analyss of chip_seq_analysis.RMd
-- diffBind_results: plots produced by the notebook 
-- disease_spec_enriched_peaks and disease_specific_gains: storing all significant peaks of theanalysis
-
+- plots: plots produced by the notebook 
+- results: disease specific enrichedpeaks and disease specific gains for every histone modification as well as their intersection with the RNA-seq DEGs
