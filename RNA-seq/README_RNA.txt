@@ -8,11 +8,17 @@ For the plots created in Rstudio, you can find a description under the code line
 
 RNA seq analysis code:
 
+
+
+
 Clinical distribution in the tree groups (young, old and AD)
 - gender
 - age
 - cause of death
 -> Clinicaldistribution.R
+
+
+
 
 Differential gene expression analysis:
 - read RNAseq dataset
@@ -39,6 +45,7 @@ Differential gene expression analysis:
 -> Comp_OWNvsPAPER.R and Comp_MAINvsRUSH
 
 
+
 RNA normalization:
 - ID convertion: hngc_symbols to ensemble ID
 - used genelength for normalization (function getGeneLengthAndGCContent)	
@@ -52,6 +59,7 @@ RNA normalization:
 -> normalizedRNA.R
 
 
+
 Visualization of GO term (David) "regulation of transcription" with different heatmaps:
 	
 	Output: 
@@ -60,6 +68,8 @@ Visualization of GO term (David) "regulation of transcription" with different he
 	- GOenrichment.png
 
 -> GODavid_differentialexpression.R
+
+
 
 STRING analysis of upregulated regulation of transcription genes:
 - visualization in cytoscape:
@@ -75,10 +85,16 @@ STRING analysis of upregulated regulation of transcription genes:
 	are located in the center of the network. 52 genes don't have an interaction with other genes.
 	Nodesize: mean expression in AD
 	Color intensity: log2-fold (AD vs old)
+	
+-> STRING.R
+
+
 
 Relating groups (AD vs old) to gene expression variation:
 - normalized RNA
 - use of ExpressionSet
 - linear model (lmFit)
+
 	Output: lmFit.png
-->lmfit.R
+	
+-> lmfit.R

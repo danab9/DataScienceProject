@@ -16,7 +16,7 @@ colnames(rnaseqdata) <- paste0(data.frame(str_split(colnames(rnaseqdata),'[.]'))
 #rnaseq_ercc <- read.table("RNAseq/GSE153873_summary_count.ercc.txt", sep = "\t")
 dim(rnaseqdata)
 # 27135 different genes and 30 patients
-
+any(is.na(rnaseqdata))
 
 # Groups
 AD <- dplyr::select(rnaseqdata, starts_with("AD"))
