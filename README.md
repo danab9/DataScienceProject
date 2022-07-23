@@ -26,3 +26,7 @@ The individual analyses are located in the individual folders:
 	- plots
 	- results
 	
+------------
+
+Note: \
+One should run ML analysis only after the analysis of RNA-seq and ChIP-seq.
