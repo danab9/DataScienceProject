@@ -30,3 +30,11 @@ The individual analyses are located in the individual folders:
 
 Note: \
 One should run ML analysis only after the analysis of RNA-seq and ChIP-seq.
+
+----
+## Required R packages
+* dplyr
+* stringr
+* mixOmics
+* iClusterPlus
+* 
