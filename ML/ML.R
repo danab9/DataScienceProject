@@ -69,26 +69,78 @@ X <- list(rna_seq = rna_seq_best, chipseq = data.matrix(chip_seq_best))
 # one may change number of genes.
 tokeep <- list(rna_seq = c(30,30), chipseq = c(30,30))
 
-# run DIABLO:
-result.dialbo <- block.splsda(X, y, near.zero.var = TRUE, keepX = tokeep)
 
-# save figures as png
-png(file="plots/DIABLO_ADvsCTRL_INDIV.png")
-
-plotIndiv(result.dialbo,
-          ind.names = FALSE,
-          legend = TRUE, cex = c(1,2),
-          title = "AD vs. control")
-
+# model tuning
+# find number of components
+result.dialbo <- block.splsda(X, y, near.zero.var = TRUE, keepX = tokeep, ncomp = 5)
+# tuning the number of components
+perf = perf(result.dialbo, folds=3, nrepeat=10)
+png("plots/performance_components.png")
+plot(perf)
 dev.off()
+# best option: 2 components
 
-png(file="plots/DIABLO_ADvsCTRL_VAR.png")
-plotVar(result.dialbo, legend = TRUE)
+design <- matrix(0.1, ncol=length(X), nrow=length(X), 
+                 dimnames=list(names(X), names(X)))
+diag(design) <- 0 # set diagonal to s0
+
+# tunning number of features:
+tune <- tune.block.splsda(X = X, Y = y, ncomp = 2, 
+                              folds = 10, nrepeat = 1, design=design,
+                              dist = "centroids.dist")
+
+list.keepX <- tune$choice.keepX
+
+# run again with one component and new keepX list
+results.tuned <- block.splsda(X, y, keepX = list.keepX, ncomp = 2)
+#
+png(file="plots/DIABLO_ADvsCTRL_INDIV.png")
+plotIndiv(results.tuned,
+          ind.names = FALSE,
+          legend = TRUE,
+          title = "AD vs. control")
 dev.off()
 
 png(file="plots/DIABLO_ADvsCTRL_CIR.png")
-circosPlot(result.dialbo, cutoff = 0.85)
+circosPlot(results.tuned, cutoff = 0.85)
 dev.off()
-
-corMat <- circosPlot(result.dialbo, cutoff = 0.85)
+# save corralation also as matrix
+corMat <- circosPlot(results.tuned, cutoff = 0.85)
 write.csv(corMat,file="results/corMat_RNAvsCHIP.csv")
+
+# save names of selected variables
+rnavars_c1 <- selectVar(results.tuned, block = 'rna_seq', comp = 1)$rna_seq$name 
+rnavars_c2 <- selectVar(results.tuned, block = 'rna_seq', comp = 2)$rna_seq$name
+chipseqvars_c1 <- selectVar(results.tuned, block = 'chipseq', comp = 1)$chipseq$name
+chipseqvars_c2 <- selectVar(results.tuned, block = 'chipseq', comp = 2)$chipseq$name
+
+# output selected variables to file
+write.table(rnavars_c1, file="results/rna_vars_c1.txt", quote = F, row.names = F, col.names = F)
+write.table(rnavars_c2, file="results/rna_vars_c2.txt", quote = F, row.names = F, col.names = F)
+write.table(chipseqvars_c1, file="results/chipseq_vars_c1.txt", quote = F, row.names = F, col.names = F)
+write.table(chipseqvars_c2, file="results/chipseq_vars_c2.txt", quote = F, row.names = F, col.names = F)
+###########################3
+
+# run DIABLO:
+# result.dialbo <- block.splsda(X, y, near.zero.var = TRUE, keepX = tokeep)
+
+# save figures as png
+# png(file="plots/DIABLO_ADvsCTRL_INDIV.png")
+# 
+# plotIndiv(result.dialbo,
+#           ind.names = FALSE,
+#           legend = TRUE, cex = c(1,2),
+#           title = "AD vs. control")
+# 
+# dev.off()
+# 
+# 
+# png(file="plots/DIABLO_ADvsCTRL_CIR.png")
+# circosPlot(result.dialbo, cutoff = 0.85)
+# dev.off()
+
+# corMat <- circosPlot(result.dialbo, cutoff = 0.85)
+# write.csv(corMat,file="results/corMat_RNAvsCHIP.csv")
+# 
+# # DIABLO error rates
+
