@@ -29,6 +29,9 @@ The individual analyses are located in the individual folders:
 	
 ------------
 
+Data is stored at the DropBox Group6_DataScienceProject.
+https://www.dropbox.com/sh/d4acbu5cgx3083q/AABf1XMQRocaqsvrt6rL-gHRa?dl=0
+
 Note: \
 One should run ML analysis only after the analysis of RNA-seq and ChIP-seq.
 
