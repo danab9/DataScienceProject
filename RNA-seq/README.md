@@ -15,6 +15,7 @@ Clinical distribution in the tree groups (young, old and AD)
 - gender
 - age
 - cause of death
+
 -> Clinicaldistribution.R
 
 
